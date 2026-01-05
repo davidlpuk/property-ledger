@@ -1,0 +1,20 @@
+CREATE TABLE transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    property_id UUID,
+    tenant_id UUID,
+    category_id UUID,
+    date DATE NOT NULL,
+    description TEXT,
+    amount DECIMAL(12,2) NOT NULL,
+    type TEXT CHECK (type IN ('income',
+    'expense')),
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending',
+    'posted',
+    'excluded')),
+    source TEXT,
+    ai_category_suggestion UUID,
+    ai_confidence DECIMAL(3,2),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);

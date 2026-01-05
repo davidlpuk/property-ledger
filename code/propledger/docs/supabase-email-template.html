@@ -1,0 +1,54 @@
+<!-- 
+  SUPABASE EMAIL TEMPLATE - Signup Confirmation
+  
+  To apply this template:
+  1. Go to Supabase Dashboard > Authentication > Email Templates
+  2. Select "Confirm signup" template
+  3. Set Subject: "Welcome to PropLedger - Verify Your Email"
+  4. Paste the HTML below into the body
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 32px;">
+    <h1 style="color: #6366f1; font-size: 28px; margin: 0;">PropLedger</h1>
+  </div>
+  
+  <p>Hi there,</p>
+  
+  <p>Welcome to PropLedger! 🎉</p>
+  
+  <p>You're one step away from taking control of your property finances.</p>
+  
+  <p>Please verify your email address by clicking the button below:</p>
+  
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="{{ .ConfirmationURL }}" 
+       style="display: inline-block; background-color: #6366f1; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+      Verify Email Address
+    </a>
+  </div>
+  
+  <p><strong>What's next?</strong></p>
+  <ul style="padding-left: 20px;">
+    <li>Upload your first bank statement</li>
+    <li>Set up your properties</li>
+    <li>Watch your expenses get organized automatically</li>
+  </ul>
+  
+  <p style="color: #6b7280; font-size: 14px;">If you didn't create this account, you can safely ignore this email.</p>
+  
+  <p>Best regards,<br>The PropLedger Team</p>
+  
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+  
+  <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+    PropLedger - Property Finance Made Simple
+  </p>
+</body>
+</html>

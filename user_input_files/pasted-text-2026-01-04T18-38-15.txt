@@ -1,0 +1,517 @@
+# PropertyLedger — Multi-Property Expense Tracker
+
+You are building "PropertyLedger", a desktop-first personal finance application for managing expenses across multiple properties. The user is a busy professional who needs to quickly categorise bank transactions, assign them to specific properties, and visualise spending patterns without manual data entry.
+
+---
+
+## Objectives
+
+1. Accept CSV or Excel bank statement uploads
+2. Parse and normalise transaction data with intelligent column detection
+3. Auto-categorise transactions using learned rules and user corrections
+4. Assign each transaction to a specific property (with support for shared expenses)
+5. Display high-level visual summaries by category, property, and time period
+6. Allow drill-down from summary to individual transactions
+7. Support notes, reminders, and document attachments on transactions
+8. Persist all historical data for trend and year-on-year analysis
+9. Enable export for tax filing and accountant review
+10. Provide a first-run onboarding experience to bootstrap the system
+
+---
+
+## Data Model
+
+### Transaction
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Unique identifier |
+| `date` | Date | Transaction date |
+| `description_raw` | String | Original bank description |
+| `description_clean` | String | Normalised vendor name (auto-generated, user-editable) |
+| `amount` | Decimal | Preserve original value, signed (negative = outgoing) |
+| `currency` | String | Default: EUR — never convert |
+| `type` | Enum | `expense` / `income` / `refund` / `transfer` |
+| `category_id` | FK | Linked category |
+| `property_id` | FK | Linked property (nullable for shared) |
+| `property_split` | JSON | Optional: `[{property_id, percentage}]` for shared expenses |
+| `bank_account_id` | FK | Source account |
+| `is_recurring` | Boolean | Auto-detected or user-marked |
+| `recurrence_group_id` | UUID | Groups related recurring transactions |
+| `note` | Text | Optional user note |
+| `note_resolved` | Boolean | Default: false |
+| `attachments` | Array | File references (receipts, invoices) |
+| `archived` | Boolean | Hidden from reports but retained |
+| `created_at` | Timestamp | Import timestamp |
+| `updated_at` | Timestamp | Last modification |
+
+### Category (two-level hierarchy)
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Unique identifier |
+| `name` | String | Display name |
+| `parent_id` | UUID | Null for top-level categories |
+| `icon` | String | Optional icon identifier |
+| `colour` | String | Hex colour for charts |
+| `is_system` | Boolean | True for defaults, false for user-created |
+| `archived` | Boolean | Hidden but retained for historical data |
+
+**Default categories:**
+- Tax → Council Tax, Income Tax, Capital Gains
+- Utilities → Water, Electricity, Gas, Heating Oil
+- Insurance → Buildings, Contents, Landlord
+- Mortgage / Finance → Mortgage Payment, Bank Fees, Interest
+- Maintenance → Repairs, Cleaning, Garden, Pest Control
+- Services → Internet, Security, Property Management
+- Furnishings → Furniture, Appliances, Fixtures
+- Legal / Professional → Solicitor, Accountant, Valuation
+- Income → Rent Received, Deposit, Insurance Payout
+- Other / Uncategorised
+
+### Property
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Unique identifier |
+| `name` | String | User-defined name |
+| `address` | String | Optional full address |
+| `colour` | String | Hex colour for UI consistency |
+| `is_default` | Boolean | Fallback for unassigned transactions |
+| `archived` | Boolean | Hidden but retained |
+
+### Bank Account
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Unique identifier |
+| `name` | String | e.g., "Joint Account", "Property 1 Account" |
+| `bank_name` | String | Optional |
+| `default_property_id` | FK | Auto-assign transactions from this account |
+| `date_format` | String | Detected or user-confirmed format |
+
+### Categorisation Rule
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Unique identifier |
+| `match_pattern` | String | Substring or regex |
+| `match_type` | Enum | `contains` / `starts_with` / `regex` |
+| `category_id` | FK | Target category |
+| `property_id` | FK | Target property (nullable) |
+| `priority` | Integer | Higher = checked first (resolves conflicts) |
+| `confidence` | Enum | `auto` / `user-confirmed` |
+| `created_from_transaction_id` | FK | Origin transaction if learned |
+
+### Budget
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Unique identifier |
+| `category_id` | FK | Nullable (all categories if null) |
+| `property_id` | FK | Nullable (all properties if null) |
+| `amount` | Decimal | Monthly limit |
+| `alert_threshold` | Integer | Percentage to trigger warning (e.g., 80) |
+
+### Reminder
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Unique identifier |
+| `title` | String | e.g., "Council Tax Due" |
+| `due_date` | Date | Next occurrence |
+| `recurrence` | Enum | `once` / `monthly` / `quarterly` / `annual` |
+| `category_id` | FK | Optional link |
+| `property_id` | FK | Optional link |
+| `completed` | Boolean | For one-time reminders |
+
+### Audit Log
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Unique identifier |
+| `timestamp` | Timestamp | When change occurred |
+| `entity_type` | String | e.g., "transaction", "rule" |
+| `entity_id` | UUID | Affected record |
+| `action` | Enum | `create` / `update` / `delete` / `archive` |
+| `field_changed` | String | Specific field if update |
+| `old_value` | JSON | Previous value |
+| `new_value` | JSON | New value |
+
+---
+
+## Upload and Parsing
+
+### File Handling
+- Accept `.csv` and `.xlsx` files via drag-and-drop or file picker
+- Maximum file size: 10MB
+- Support multiple files in single upload session
+
+### Column Detection
+- Auto-detect columns: date, description, amount (debit/credit or single signed column)
+- Present detected mapping to user for confirmation on first upload from new source
+- Remember mapping per bank account for future uploads
+
+### Date Format Handling
+- Auto-detect format from sample rows
+- Support: `DD/MM/YYYY`, `MM/DD/YYYY`, `YYYY-MM-DD`, `DD-MMM-YYYY`
+- If ambiguous (e.g., `01/02/2024`), prompt user to confirm
+- Store confirmed format against bank account
+
+### Duplicate Prevention
+- Hash each transaction: `date + description + amount`
+- On upload, flag exact duplicates and skip by default
+- Show count of skipped duplicates in upload summary
+- Allow user to force-import if needed
+
+### Validation Warnings
+Surface warnings (not blockers) for:
+- Future-dated transactions (> 7 days ahead)
+- Unusually large amounts (> 3x highest previous transaction)
+- Transactions older than 2 years (may indicate wrong file)
+- Duplicate file detection (> 80% overlap with previous upload)
+
+### Vendor Normalisation
+- On import, generate `description_clean` by:
+  - Removing reference numbers, DD markers, dates
+  - Title-casing vendor names
+  - Matching against known vendor aliases
+- User can edit clean name; edits create aliases for future matching
+- Example: "THAMES WATER PLC DD REF8837" → "Thames Water"
+
+---
+
+## Categorisation Logic
+
+### Auto-Categorisation Flow
+1. On upload, process each transaction:
+2. Check rules in priority order (highest first)
+3. If rule matches → assign category and property, mark confidence
+4. If multiple rules match → use highest priority; log conflict for review
+5. If no match → mark as "Uncategorised", surface in review queue
+
+### User Correction Flow
+1. User manually assigns category or property to a transaction
+2. System prompts: "Apply this to all similar transactions?"
+   - Show count of affected transactions
+   - Preview list before confirming
+3. If yes → create new rule with `confidence: user-confirmed`, `priority: 100`
+4. If no → apply to single transaction only
+
+### Rule Management
+- Dedicated rules page showing all rules
+- Edit: pattern, match type, category, property, priority
+- Test: enter sample description to see which rule matches
+- Merge: combine duplicate rules
+- Delete: remove rule (does not affect already-categorised transactions)
+- Import/Export: JSON format for backup
+
+### Conflict Resolution
+- If two rules match same transaction, highest priority wins
+- If same priority, `user-confirmed` beats `auto`
+- If still tied, most recently created wins
+- Log all conflicts for user review
+
+---
+
+## Transaction Management
+
+### Split Transactions
+- Any transaction can be split across:
+  - Multiple categories (e.g., 70% Maintenance, 30% Admin)
+  - Multiple properties (e.g., 50/50 shared expense)
+  - Or both
+- Original transaction retained; splits stored in `property_split` / create child records
+- Charts reflect proportional amounts
+
+### Refunds and Credits
+- Positive amounts auto-tagged as `income` or `refund` based on rules
+- Refunds: user can link to original expense transaction
+- Linked refunds subtract from category totals in that period
+- Unlinked refunds show in "Income" or separate "Refunds" view
+
+### Recurring Transaction Detection
+- Auto-detect recurring patterns:
+  - Same vendor + similar amount (±10%) + regular interval (weekly/monthly/quarterly/annual)
+- Group into `recurrence_group_id`
+- Flag missed expected payments
+- Show "Recurring" section in dashboard with next expected dates
+
+### Bulk Operations
+- Multi-select transactions via checkboxes
+- Bulk actions:
+  - Assign category
+  - Assign property
+  - Archive
+  - Add note
+  - Delete (soft delete with confirmation)
+- Filter, then "Select all matching" for large operations
+
+### Archive vs Delete
+- Archive: hidden from reports, retained in database, can be restored
+- Delete: soft delete, moves to trash, auto-purged after 30 days
+- Neither action affects historical totals unless user explicitly recalculates
+
+---
+
+## Views and Visualisation
+
+### Dashboard (Default View)
+- Time selector: Month / Quarter / Year / Tax Year (Apr–Mar) / Custom range
+- Property selector: All / Individual property / Compare properties
+- Primary visualisation: Donut chart showing spend by top-level category
+- Secondary: Horizontal bar chart ranking categories by spend
+- KPIs displayed prominently:
+  - Total spend (period)
+  - vs previous period (% change)
+  - Largest category
+  - Uncategorised count (clickable)
+- Click any segment → drill into subcategories
+
+### Category Drill-Down
+- Subcategory breakdown (nested donut or bar)
+- Transaction list below, sorted by date descending
+- Inline quick-edit: category, property, note
+- Click transaction → full detail modal
+
+### Property Comparison
+- Side-by-side bar charts for selected properties
+- Same time period, same category grouping
+- Toggle: Absolute amounts / Percentage of total
+- Highlight categories where one property significantly exceeds other
+
+### Trends View
+- Line chart: monthly spend over time (12-month default)
+- Stacked area option to show category composition
+- Filter by category and/or property
+- Anomaly highlighting: flag months > 1.5x rolling 3-month average
+- Year-on-year toggle: overlay same months from previous year
+
+### Year-on-Year Comparison
+- Select two periods (e.g., "2024 Tax Year" vs "2023 Tax Year")
+- Side-by-side category breakdown
+- Variance column: amount and percentage change
+- Drill-down to see which transactions drove the difference
+
+### Income and Net Position
+- Toggle to include income transactions
+- Net view: Income minus Expenses per property
+- Useful for rental property P&L
+
+### Recurring Transactions View
+- List of all detected recurring payments
+- Columns: Vendor, Amount, Frequency, Last Paid, Next Expected, Property
+- Flags: Overdue (expected but not seen), Unusual (amount changed significantly)
+- Click to see full history of that recurring payment
+
+### Search
+- Global search bar, always accessible
+- Search by:
+  - Description (raw or clean)
+  - Amount (exact or range)
+  - Date range
+  - Category
+  - Property
+  - Notes content
+- Results show in transaction list format
+- Save frequent searches as quick filters
+
+---
+
+## Notes and Reminders
+
+### Transaction Notes
+- Any transaction can have a text note
+- Notes support markdown (basic: bold, italic, lists)
+- Note indicator icon on transaction rows
+- "Resolved" checkbox for action-required notes
+
+### Notes Review Page
+- Shows all transactions with notes
+- Columns: Date, Vendor, Amount, Property, Note preview
+- Filters: All / Unresolved / Resolved
+- Sort: Date (newest first) / Property / Category
+- Bulk mark as resolved
+
+### Reminders
+- Create reminders for upcoming payments
+- Link to category and property (optional)
+- Recurrence options: once, monthly, quarterly, annual
+- Dashboard widget showing upcoming reminders (next 30 days)
+- Mark complete (for one-time) or snooze
+
+---
+
+## Budgets and Alerts
+
+### Budget Setup
+- Set monthly budget per:
+  - Category (any level)
+  - Property
+  - Category + Property combination
+  - Overall
+- Alert threshold: percentage at which to warn (default 80%)
+
+### Budget Tracking
+- Dashboard widget: budget progress bars
+- Colour coding: green (< 60%), amber (60–90%), red (> 90%)
+- Click to see transactions contributing to budget
+
+### Alerts
+- In-app notification when threshold crossed
+- Optional: daily digest email with budget status
+- End-of-month summary: over/under budget by category
+
+---
+
+## Export and Sharing
+
+### Export Formats
+- CSV: all transactions with full metadata
+- Excel: formatted workbook with multiple sheets (summary, transactions, by property)
+- PDF Report: 
+  - Period summary
+  - Charts (category breakdown, trends)
+  - Transaction list
+  - Suitable for accountant or tax filing
+
+### Tax Year Report
+- Pre-built report for UK tax year (6 Apr – 5 Apr)
+- Sections: Income, Allowable Expenses by category, Net position
+- Notes on methodology
+- Export as PDF
+
+### Shared Access (Future)
+- Invite read-only viewers (accountant, partner)
+- Shareable link with expiry
+- Permissions: view only / view + export / full edit
+
+---
+
+## Attachments
+
+### Supported Files
+- Images: JPG, PNG, HEIC (for phone photos of receipts)
+- Documents: PDF
+- Maximum size: 5MB per file
+- Multiple attachments per transaction
+
+### Attachment Features
+- Thumbnail preview in transaction detail
+- Full-screen viewer
+- Download original
+- Delete attachment (with confirmation)
+
+### Storage
+- Store locally in app data folder
+- Optional: sync to cloud storage (future feature)
+
+---
+
+## Data Integrity
+
+### Audit Trail
+- Log all changes to transactions, rules, categories
+- View history for any record
+- Restore previous values (undo)
+
+### Backup
+- Auto-backup database daily (local)
+- Manual export: full database as JSON or SQLite file
+- Restore from backup file
+
+### Data Validation
+- Prevent negative budgets
+- Prevent circular category hierarchies
+- Prevent deletion of categories with linked transactions (archive instead)
+- Prevent duplicate property names
+
+---
+
+## Onboarding Flow
+
+### First Run
+1. Welcome screen explaining the app
+2. Create first property (name, optional address, colour)
+3. Create additional properties or skip
+4. Review default categories, add custom if needed
+5. Upload first bank file
+6. Confirm column mapping
+7. Review auto-categorisation results
+8. Manually categorise a few transactions to seed rules
+9. Dashboard loads with initial data
+
+### Ongoing Guidance
+- Uncategorised badge always visible
+- Weekly prompt if uncategorised transactions exist
+- Tips for new users (dismissable)
+
+---
+
+## UI Principles
+
+- Desktop-first, responsive down to tablet
+- High information density without clutter
+- Charts as primary interface, tables as secondary
+- Consistent colour-coding by property throughout
+- Dark mode support (system preference or manual toggle)
+- All actions achievable in ≤ 3 clicks
+- Keyboard shortcuts for power users:
+  - `/` → Search
+  - `N` → New note
+  - `U` → Upload file
+  - `1-9` → Quick category assign
+- Accessibility: WCAG 2.1 AA compliance
+
+---
+
+## Behaviour Rules
+
+1. Never modify or convert currency values — always preserve EUR as uploaded
+2. Never permanently delete transactions — archive or soft-delete only
+3. Always surface uncategorised transactions prominently
+4. Learn from user corrections — create rules automatically
+5. If upload contains mixed properties and no rules exist, prompt user to assign first 5 transactions manually to bootstrap learning
+6. Persist all data locally by default
+7. Show confirmation for any destructive action (delete, bulk edit, restore)
+8. If a rule is deleted, already-categorised transactions retain their categories
+9. If a category is archived, reassign linked transactions to parent or "Other"
+10. Handle edge cases gracefully:
+    - Same transaction in two uploads → deduplicate
+    - Transaction belongs to both properties → use split
+    - Bank format changes → prompt for new column mapping
+    - Category renamed → update all linked transactions and rules
+
+---
+
+## Edge Cases
+
+| Scenario | Behaviour |
+|----------|-----------|
+| Transaction belongs to both properties equally | Use split: 50/50 allocation |
+| Same file uploaded twice | Detect via hash, show warning, skip duplicates by default |
+| Bank changes export format | Detect column mismatch, prompt for re-mapping |
+| Category renamed | Propagate to all transactions and rules |
+| Category merged | Reassign all transactions to target category, delete source |
+| Rule deleted | Existing categorisations unchanged; future transactions won't match |
+| Property deleted | Block if transactions exist; offer to reassign or archive |
+| Upload contains future dates | Warn but allow import |
+| Upload contains very old transactions | Warn but allow import |
+| Recurring payment missed | Flag in recurring view, surface notification |
+| Refund without linked expense | Show in income/refunds section |
+
+---
+
+## Technical Notes
+
+- Local-first architecture: all data stored on device
+- Database: SQLite for portability and query performance
+- File storage: app data directory with organised subfolders
+- Export: native file dialogs for save location
+- Charts: use a modern charting library with animation and interactivity
+- Performance: virtualised lists for large transaction sets (1000+)
+- Future: optional cloud sync and multi-device support
+
+---
+
+## Success Criteria
+
+The app is successful when the user can:
+1. Upload a bank file and see categorised results in under 60 seconds
+2. Understand their spending at a glance without scrolling
+3. Answer "How much did I spend on utilities at Property X last quarter?" in 2 clicks
+4. Identify unusual expenses through visual anomaly detection
+5. Export a tax-ready report in one action
+6. Trust that their data is accurate, secure, and never lost

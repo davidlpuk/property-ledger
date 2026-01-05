@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PropLedger | Financial Clarity for Spanish Landlords</title>
+    <meta name="description" content="PropLedger transforms chaotic bank statements into compliant, organized financial reports for Spanish independent landlords.">
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-purple: #5B4B8A;
+            --primary-purple-hover: #4A3D73;
+            --light-purple: #E8E4F0;
+            --accent-teal: #4A9B8C;
+            --dark-text: #333333;
+            --medium-gray: #666666;
+            --light-gray: #F8F8F8;
+            --white: #FFFFFF;
+            
+            --container-max-width: 1200px;
+            --section-padding: 80px;
+            --section-padding-mobile: 48px;
+            
+            --radius-button: 8px;
+            --radius-card: 12px;
+            --radius-section: 16px;
+            
+            --shadow-card: 0 4px 20px rgba(91, 75, 138, 0.1);
+            --shadow-hover: 0 8px 30px rgba(91, 75, 138, 0.15);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 18px;
+            line-height: 28px;
+            color: var(--medium-gray);
+            background-color: var(--white);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            color: var(--dark-text);
+            font-weight: 700;
+        }
+
+        h1 { font-size: 48px; line-height: 56px; margin-bottom: 24px; }
+        h2 { font-size: 36px; line-height: 44px; margin-bottom: 20px; }
+        h3 { font-size: 24px; line-height: 32px; font-weight: 600; margin-bottom: 16px; }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: var(--transition);
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        .container {
+            max-width: var(--container-max-width);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .section {
+            padding: var(--section-padding) 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: var(--radius-button);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-purple);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-purple-hover);
+        }
+
+        .btn-outline {
+            border-color: var(--primary-purple);
+            color: var(--primary-purple);
+            background: transparent;
+        }
+
+        .btn-outline:hover {
+            background-color: var(--light-purple);
+        }
+
+        .btn-large {
+            padding: 16px 32px;
+            font-size: 18px;
+        }
+
+        .btn-white {
+            background-color: var(--white);
+            color: var(--primary-purple);
+        }
+
+        .btn-white:hover {
+            background-color: var(--light-purple);
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: var(--white);
+            z-index: 1000;
+            transition: var(--transition);
+            height: 80px;
+            display: flex;
+            align-items: center;
+        }
+
+        header.scrolled {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: 70px;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-purple);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--dark-text);
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-purple);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding-top: 160px;
+            padding-bottom: 80px;
+            background: linear-gradient(180deg, var(--light-purple) 0%, var(--white) 100%);
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--white);
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-purple);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .hero-content p {
+            margin-bottom: 32px;
+            font-size: 20px;
+        }
+
+        .hero-ctas {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .cta-secondary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--primary-purple);
+        }
+
+        .hero-supporting {
+            font-size: 14px;
+            color: var(--medium-gray);
+        }
+
+        .hero-image-placeholder {
+            background: var(--white);
+            border-radius: var(--radius-section);
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-hover);
+            border: 1px solid var(--light-purple);
+            color: var(--primary-purple);
+            font-weight: 700;
+            font-size: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-image-placeholder::after {
+            content: "";
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            right: 40px;
+            bottom: 40px;
+            border: 2px dashed var(--light-purple);
+            border-radius: 8px;
+        }
+
+        /* Trust Bar */
+        .trust-bar {
+            background-color: var(--light-purple);
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .trust-items {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--primary-purple);
+            font-size: 16px;
+        }
+
+        .works-with {
+            font-size: 14px;
+            color: var(--medium-gray);
+        }
+
+        /* Problem/Solution */
+        .problem-solution {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+        }
+
+        .ps-label {
+            text-transform: uppercase;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .problem .ps-label { color: #D97706; }
+        .solution .ps-label { color: var(--accent-teal); }
+
+        .ps-list {
+            margin-top: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .ps-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            font-size: 16px;
+        }
+
+        .ps-item svg {
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        /* Features Cards */
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 60px;
+        }
+
+        .features-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .feature-card {
+            background: var(--white);
+            padding: 40px;
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            transition: var(--transition);
+            border: 1px solid var(--light-gray);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--light-purple);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            color: var(--primary-purple);
+        }
+
+        /* How It Works */
+        .how-it-works {
+            background: var(--light-gray);
+            border-radius: var(--radius-section);
+        }
+
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            position: relative;
+            margin-top: 60px;
+        }
+
+        .steps-container::before {
+            content: "";
+            position: absolute;
+            top: 40px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: var(--light-purple);
+            z-index: 1;
+        }
+
+        .step {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-number {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-purple);
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 auto 24px;
+            border: 8px solid var(--light-gray);
+        }
+
+        .step-time {
+            display: inline-block;
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent-teal);
+            background: #E6F4F1;
+            padding: 2px 12px;
+            border-radius: 100px;
+        }
+
+        .steps-footer {
+            text-align: center;
+            margin-top: 48px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+
+        .grid-item {
+            display: flex;
+            gap: 20px;
+        }
+
+        .grid-icon {
+            flex-shrink: 0;
+            color: var(--accent-teal);
+        }
+
+        .grid-content h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .grid-content p {
+            font-size: 16px;
+        }
+
+        /* Testimonials */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .testimonial-card {
+            background: var(--white);
+            padding: 32px;
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stars {
+            color: #FBBF24;
+            margin-bottom: 16px;
+        }
+
+        .quote {
+            font-style: italic;
+            margin-bottom: 24px;
+            flex-grow: 1;
+        }
+
+        .author {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            background: var(--light-purple);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--primary-purple);
+        }
+
+        .author-info h4 {
+            font-size: 16px;
+            color: var(--dark-text);
+        }
+
+        .author-info p {
+            font-size: 14px;
+        }
+
+        /* Pricing */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            align-items: flex-start;
+        }
+
+        .pricing-card {
+            background: var(--white);
+            padding: 48px 32px;
+            border-radius: var(--radius-card);
+            border: 1px solid var(--light-gray);
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .pricing-card.highlight {
+            border: 2px solid var(--primary-purple);
+            position: relative;
+            transform: scale(1.05);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-purple);
+            color: var(--white);
+            padding: 4px 16px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .price {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 24px 0 8px;
+        }
+
+        .price span {
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--medium-gray);
+        }
+
+        .pricing-features {
+            margin: 32px 0;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .pricing-feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+        }
+
+        .pricing-footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 14px;
+        }
+
+        /* FAQ */
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid var(--light-purple);
+        }
+
+        .faq-question {
+            width: 100%;
+            padding: 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: none;
+            border: none;
+            text-align: left;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--dark-text);
+            cursor: pointer;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .faq-answer p {
+            padding-bottom: 24px;
+            font-size: 16px;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 200px;
+        }
+
+        .faq-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Final CTA */
+        .final-cta {
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-hover) 100%);
+            color: var(--white);
+            text-align: center;
+            border-radius: var(--radius-section);
+            margin-bottom: 80px;
+        }
+
+        .final-cta h2, .final-cta p {
+            color: var(--white);
+        }
+
+        .final-cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            align-items: center;
+            margin: 40px 0 24px;
+        }
+
+        .final-cta-secondary {
+            color: var(--white);
+            font-weight: 600;
+            text-decoration: underline;
+        }
+
+        .final-cta-supporting {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--light-gray);
+            padding: 80px 0 40px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .footer-logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-purple);
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .footer-tagline {
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 16px;
+        }
+
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-purple);
+            box-shadow: var(--shadow-card);
+        }
+
+        .footer-column h4 {
+            font-size: 18px;
+            margin-bottom: 24px;
+            color: var(--dark-text);
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-links a {
+            font-size: 16px;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-purple);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #E5E5E5;
+            padding-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            height: 100%;
+            background: var(--white);
+            z-index: 1001;
+            padding: 40px;
+            transition: right 0.3s ease;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu-close {
+            align-self: flex-end;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mobile-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .mobile-nav a {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+
+        .mobile-auth {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: auto;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            h1 { font-size: 40px; line-height: 48px; }
+            .hero-grid { gap: 40px; }
+            .features-cards, .pricing-grid, .testimonials-grid { grid-template-columns: repeat(2, 1fr); }
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .section { padding: var(--section-padding-mobile) 0; }
+            .nav-links, .auth-buttons { display: none; }
+            .mobile-toggle { display: block; }
+            
+            .hero-grid { grid-template-columns: 1fr; text-align: center; }
+            .hero-ctas { justify-content: center; flex-direction: column; }
+            .hero-image-placeholder { height: 300px; }
+            
+            .problem-solution { grid-template-columns: 1fr; gap: 48px; }
+            .features-cards, .pricing-grid, .testimonials-grid, .features-grid { grid-template-columns: 1fr; }
+            
+            .steps-container { grid-template-columns: 1fr; gap: 40px; }
+            .steps-container::before { display: none; }
+            
+            .pricing-card.highlight { transform: none; }
+            
+            .footer-grid { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay" id="overlay"></div>
+
+    <header id="header">
+        <div class="container header-container">
+            <a href="#" class="logo">PropLedger</a>
+            
+            <nav class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#faq">FAQ</a>
+                <a href="#resources">Resources</a>
+            </nav>
+
+            <div class="auth-buttons">
+                <a href="#" class="btn btn-outline">Login</a>
+                <a href="#" class="btn btn-primary">Sign Up</a>
+            </div>
+
+            <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle Menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="mobile-menu" id="mobile-menu">
+        <button class="mobile-menu-close" id="mobile-close">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <nav class="mobile-nav">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
+            <a href="#resources">Resources</a>
+        </nav>
+        <div class="mobile-auth">
+            <a href="#" class="btn btn-outline">Login</a>
+            <a href="#" class="btn btn-primary">Sign Up</a>
+        </div>
+    </div>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container hero-grid">
+                <div class="hero-content fade-in">
+                    <div class="badge">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Trusted by 5,000+ Spanish Landlords
+                    </div>
+                    <h1>Stop Dreading Tax Season.<br>Start Feeling in Control.</h1>
+                    <p>PropLedger transforms chaotic bank statements into compliant, organized financial reports—so you can manage your rental properties with confidence, not anxiety.</p>
+                    <div class="hero-ctas">
+                        <a href="#pricing" class="btn btn-primary btn-large">
+                            Start Free Trial
+                            <svg style="margin-left: 8px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </a>
+                        <a href="#" class="cta-secondary">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                            See How It Works
+                        </a>
+                    </div>
+                    <p class="hero-supporting">No credit card required • Setup in 5 minutes • Cancel anytime</p>
+                </div>
+                <div class="hero-image fade-in">
+                    <div class="hero-image-placeholder">
+                        Dashboard Preview
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trust Bar -->
+        <div class="trust-bar">
+            <div class="container">
+                <div class="trust-items">
+                    <div class="trust-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        GDPR Compliant
+                    </div>
+                    <div class="trust-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        Bank-Level Security
+                    </div>
+                    <div class="trust-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        AEAT & Veri*Factu Ready
+                    </div>
+                    <div class="trust-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                        WCAG 2.2 Accessible
+                    </div>
+                </div>
+                <p class="works-with">Works with: Santander • BBVA • CaixaBank • Sabadell • Bankinter • ING</p>
+            </div>
+        </div>
+
+        <!-- Problem/Solution Section -->
+        <section class="section container">
+            <div class="problem-solution">
+                <div class="problem fade-in">
+                    <span class="ps-label">The Challenge</span>
+                    <h2>Managing Rental Finances Shouldn't Feel This Hard</h2>
+                    <p>You inherited a few apartments or built a small property portfolio. Now you're drowning in bank statements, second-guessing every deduction, and losing sleep before tax deadlines.</p>
+                    <div class="ps-list">
+                        <div class="ps-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            Scattered bank files across multiple accounts
+                        </div>
+                        <div class="ps-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            Uncertainty about which expenses are deductible
+                        </div>
+                        <div class="ps-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            Hours lost on manual categorization
+                        </div>
+                        <div class="ps-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            Anxiety about compliance mistakes
+                        </div>
+                    </div>
+                </div>
+                <div class="solution fade-in">
+                    <span class="ps-label">The Solution</span>
+                    <h2>Finally, a Financial Tool That Gets Landlords</h2>
+                    <p>PropLedger was built specifically for Spanish independent landlords. Upload your bank files, let our AI handle the categorization, and generate tax-ready reports in minutes.</p>
+                    <div class="ps-list">
+                        <div class="ps-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            One place for all your rental finances
+                        </div>
+                        <div class="ps-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            AI suggests the right categories
+                        </div>
+                        <div class="ps-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Reports ready in minutes, not hours
+                        </div>
+                        <div class="ps-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Always compliant with Spanish regulations
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Features -->
+        <section id="features" class="section container">
+            <div class="section-header fade-in">
+                <h2>Everything You Need. Nothing You Don't.</h2>
+                <p>We've stripped away the complexity and kept only what matters to landlords.</p>
+            </div>
+            <div class="features-cards">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    </div>
+                    <h3>Smart File Upload</h3>
+                    <p>Drag and drop bank statements (CSV, OFX, PDF). Our AI parses transactions instantly and suggests categories based on your properties.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-2a8 8 0 0 0-8-8V2z"></path><path d="M12 12L2.1 12.1"></path><path d="M12 12l4.5 8.5"></path><circle cx="12" cy="12" r="2"></circle></svg>
+                    </div>
+                    <h3>AI-Powered Categorization</h3>
+                    <p>PropLedger learns how you categorize. After a few uses, it handles 85% of transactions automatically—you just confirm.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 11 12 14 15 11"></polyline></svg>
+                    </div>
+                    <h3>Built-In Compliance</h3>
+                    <p>IVA calculations, SII exports, Veri*Factu ready. We track Spanish regulations so your reports are always audit-ready.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="section">
+            <div class="container how-it-works section">
+                <div class="section-header fade-in">
+                    <h2>From Bank Statement to Tax Report in 4 Steps</h2>
+                    <p>No accounting degree required.</p>
+                </div>
+                <div class="steps-container">
+                    <div class="step fade-in">
+                        <div class="step-number">1</div>
+                        <h3>Download Your Bank File</h3>
+                        <p>Export CSV or OFX from your online banking.</p>
+                        <span class="step-time">30 sec</span>
+                    </div>
+                    <div class="step fade-in">
+                        <div class="step-number">2</div>
+                        <h3>Upload to PropLedger</h3>
+                        <p>Drag and drop. We parse and match to your properties.</p>
+                        <span class="step-time">1 min</span>
+                    </div>
+                    <div class="step fade-in">
+                        <div class="step-number">3</div>
+                        <h3>Review AI Suggestions</h3>
+                        <p>Accept, adjust, or create rules for the future.</p>
+                        <span class="step-time">5 min</span>
+                    </div>
+                    <div class="step fade-in">
+                        <div class="step-number">4</div>
+                        <h3>Generate Reports</h3>
+                        <p>One click for tax-ready reports and SII exports.</p>
+                        <span class="step-time">Instant</span>
+                    </div>
+                </div>
+                <p class="steps-footer fade-in">Average time saved: 3 hours per month</p>
+            </div>
+        </section>
+
+        <!-- Features Grid -->
+        <section class="section container">
+            <div class="section-header fade-in">
+                <h2>Powerful Features, Simple Experience</h2>
+            </div>
+            <div class="features-grid">
+                <div class="grid-item fade-in">
+                    <div class="grid-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    </div>
+                    <div class="grid-content">
+                        <h3>Multi-Property Dashboard</h3>
+                        <p>See all properties at a glance. Track income and expenses separately.</p>
+                    </div>
+                </div>
+                <div class="grid-item fade-in">
+                    <div class="grid-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    </div>
+                    <div class="grid-content">
+                        <h3>Tenant Payment Tracking</h3>
+                        <p>Know when rent is paid or overdue. Automatic reminders.</p>
+                    </div>
+                </div>
+                <div class="grid-item fade-in">
+                    <div class="grid-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    </div>
+                    <div class="grid-content">
+                        <h3>Stressed Area Detection</h3>
+                        <p>Auto-detect zonas tensionadas and apply correct deductions.</p>
+                    </div>
+                </div>
+                <div class="grid-item fade-in">
+                    <div class="grid-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="8" y1="10" x2="16" y2="10"></line><line x1="8" y1="14" x2="16" y2="14"></line><line x1="8" y1="18" x2="16" y2="18"></line></svg>
+                    </div>
+                    <div class="grid-content">
+                        <h3>IVA Calculation Engine</h3>
+                        <p>Correct rates (21%, 10%, 4%) applied automatically.</p>
+                    </div>
+                </div>
+                <div class="grid-item fade-in">
+                    <div class="grid-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                    </div>
+                    <div class="grid-content">
+                        <h3>Auto-Categorization Rules</h3>
+                        <p>Create once, apply forever. Save hours each month.</p>
+                    </div>
+                </div>
+                <div class="grid-item fade-in">
+                    <div class="grid-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                    <div class="grid-content">
+                        <h3>Secure Document Storage</h3>
+                        <p>Attach receipts to transactions. Everything in one place.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials -->
+        <section class="section container">
+            <div class="section-header fade-in">
+                <h2>What Landlords Are Saying</h2>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card fade-in">
+                    <div class="stars">★★★★★</div>
+                    <p class="quote">"I used to spend an entire weekend before quarterly filing. Now it takes 20 minutes."</p>
+                    <div class="author">
+                        <div class="avatar">MG</div>
+                        <div class="author-info">
+                            <h4>María G.</h4>
+                            <p>3 apartments in Madrid</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card fade-in">
+                    <div class="stars">★★★★★</div>
+                    <p class="quote">"Finally, software that understands Spanish rental regulations. The stressed area feature saved me from a costly mistake."</p>
+                    <div class="author">
+                        <div class="avatar">CR</div>
+                        <div class="author-info">
+                            <h4>Carlos R.</h4>
+                            <p>5 properties in Barcelona</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card fade-in">
+                    <div class="stars">★★★★★</div>
+                    <p class="quote">"I'm not tech-savvy, but PropLedger is so simple. My accountant loves the reports."</p>
+                    <div class="author">
+                        <div class="avatar">PM</div>
+                        <div class="author-info">
+                            <h4>Pilar M.</h4>
+                            <p>2 apartments in Valencia</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing -->
+        <section id="pricing" class="section container">
+            <div class="section-header fade-in">
+                <h2>Simple Pricing. No Surprises.</h2>
+                <p>Start free, upgrade when ready. All plans include Spanish compliance tools.</p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card fade-in">
+                    <h3>Starter</h3>
+                    <div class="price">€0<span>/month</span></div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            1 property
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            50 transactions/month
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Basic categorization
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Email support
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-outline" style="width: 100%">Start Free</a>
+                </div>
+                <div class="pricing-card highlight fade-in">
+                    <div class="popular-badge">Most Popular</div>
+                    <h3>Pro</h3>
+                    <div class="price">€12<span>/month</span></div>
+                    <p style="font-size: 14px; margin-top: -8px">billed annually</p>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Up to 5 properties
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Unlimited transactions
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            AI categorization
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            SII export
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Priority support
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Mobile app
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-primary" style="width: 100%">Start Free Trial</a>
+                </div>
+                <div class="pricing-card fade-in">
+                    <h3>Business</h3>
+                    <div class="price">€29<span>/month</span></div>
+                    <p style="font-size: 14px; margin-top: -8px">billed annually</p>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Unlimited properties
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Everything in Pro
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Veri*Factu e-invoicing
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Tenant management
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Accountant sharing
+                        </div>
+                        <div class="pricing-feature">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            API access
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-outline" style="width: 100%">Contact Sales</a>
+                </div>
+            </div>
+            <p class="pricing-footer">All prices exclude IVA. 14-day free trial. Cancel anytime.</p>
+        </section>
+
+        <!-- FAQ -->
+        <section id="faq" class="section container">
+            <div class="section-header fade-in">
+                <h2>Frequently Asked Questions</h2>
+            </div>
+            <div class="faq-container">
+                <div class="faq-item fade-in">
+                    <button class="faq-question" aria-expanded="false">
+                        Do I need to connect my bank account?
+                        <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>No. PropLedger works with file uploads (CSV, OFX, PDF). Your banking credentials stay with you.</p>
+                    </div>
+                </div>
+                <div class="faq-item fade-in">
+                    <button class="faq-question" aria-expanded="false">
+                        Is my data secure?
+                        <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes. 256-bit encryption, EU servers, fully GDPR compliant. We never sell your data.</p>
+                    </div>
+                </div>
+                <div class="faq-item fade-in">
+                    <button class="faq-question" aria-expanded="false">
+                        What if I'm not tech-savvy?
+                        <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>If you can attach a file to an email, you can use PropLedger. We have tutorials and responsive support.</p>
+                    </div>
+                </div>
+                <div class="faq-item fade-in">
+                    <button class="faq-question" aria-expanded="false">
+                        Does it work with Spanish tax requirements?
+                        <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Absolutely. We handle IVA, SII exports, stressed areas, and Veri*Factu compliance.</p>
+                    </div>
+                </div>
+                <div class="faq-item fade-in">
+                    <button class="faq-question" aria-expanded="false">
+                        Can my accountant access my data?
+                        <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes. Pro and Business plans allow accountant access with customizable permissions.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA -->
+        <section class="container">
+            <div class="final-cta section fade-in">
+                <h2>Ready to Take Control of Your Rental Finances?</h2>
+                <p>Join thousands of Spanish landlords who've reclaimed their weekends.</p>
+                <div class="final-cta-buttons">
+                    <a href="#pricing" class="btn btn-white btn-large">Start Your Free Trial</a>
+                    <a href="#" class="final-cta-secondary">Schedule a Demo</a>
+                </div>
+                <p class="final-cta-supporting">Free 14-day trial • No credit card • Cancel anytime</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <a href="#" class="footer-logo">PropLedger</a>
+                    <p class="footer-tagline">Financial clarity for Spanish landlords.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-icon" aria-label="LinkedIn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></a>
+                        <a href="#" class="social-icon" aria-label="Twitter"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg></a>
+                        <a href="#" class="social-icon" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h4>Product</h4>
+                    <div class="footer-links">
+                        <a href="#features">Features</a>
+                        <a href="#pricing">Pricing</a>
+                        <a href="#">Mobile App</a>
+                        <a href="#">What's New</a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h4>Resources</h4>
+                    <div class="footer-links">
+                        <a href="#">Help Center</a>
+                        <a href="#">Blog</a>
+                        <a href="#">Tax Guides</a>
+                        <a href="#">System Status</a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h4>Company</h4>
+                    <div class="footer-links">
+                        <a href="#">About</a>
+                        <a href="#">Contact</a>
+                        <a href="#">Careers</a>
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Terms</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 PropLedger S.L. All rights reserved.</p>
+                <p>Made with ❤️ in Madrid</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Sticky Header
+        const header = document.getElementById('header');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Mobile Menu Toggle
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileClose = document.getElementById('mobile-close');
+        const overlay = document.getElementById('overlay');
+        const mobileLinks = document.querySelectorAll('.mobile-nav a');
+
+        function toggleMenu() {
+            mobileMenu.classList.toggle('active');
+            overlay.classList.toggle('active');
+            document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+        }
+
+        mobileToggle.addEventListener('click', toggleMenu);
+        mobileClose.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+        mobileLinks.forEach(link => link.addEventListener('click', toggleMenu));
+
+        // FAQ Accordion
+        const faqQuestions = document.querySelectorAll('.faq-question');
+        faqQuestions.forEach(question => {
+            question.addEventListener('click', () => {
+                const item = question.parentElement;
+                const isActive = item.classList.contains('active');
+                
+                // Close all other items
+                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.faq-question').forEach(q => q.setAttribute('aria-expanded', 'false'));
+                
+                if (!isActive) {
+                    item.classList.add('active');
+                    question.setAttribute('aria-expanded', 'true');
+                }
+            });
+        });
+
+        // Fade-in on Scroll
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Smooth Scroll for Anchor Links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
+                
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    const headerOffset = 80;
+                    const elementPosition = target.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
