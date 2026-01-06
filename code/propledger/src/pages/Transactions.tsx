@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency, formatDate } from '../lib/format';
 import { Transaction, Category, Property, BankAccount, Attachment } from '../lib/types';
-import { 
+import {
   Upload, Search, Check, X, Sparkles, Loader2, MessageSquare, ArrowUpDown, FileText, ChevronDown,
   Download, Paperclip, RefreshCw, Wand2, AlertTriangle, Image as ImageIcon, File, Settings2, Filter
 } from 'lucide-react';
@@ -55,26 +55,26 @@ export function Transactions() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [uploading, setUploading] = useState(false);
-  
+
   const [aiSuggestion, setAiSuggestion] = useState<AISuggestion>({ category: null, confidence: 0, reasoning: '', loading: false });
-  
+
   const [notesTx, setNotesTx] = useState<Transaction | null>(null);
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
   const [dateSortDir, setDateSortDir] = useState<SortDir>('desc');
   const [sourceFilter, setSourceFilter] = useState('');
-  
+
   const [uploadSummary, setUploadSummary] = useState<UploadSummary>({ show: false, imported: 0, duplicates: 0, errors: 0, autoCategorized: 0, advancedRuleMatches: 0 });
   const [createRulePrompt, setCreateRulePrompt] = useState<CreateRulePrompt>({ show: false, transaction: null, category: null });
   const [showExportMenu, setShowExportMenu] = useState(false);
-  
+
   // Column visibility (persisted)
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
     const saved = localStorage.getItem('propledger_tx_columns');
     return saved ? JSON.parse(saved) : { date: true, description: true, property: true, category: true, amount: true, actions: true };
   });
   const [showColumnMenu, setShowColumnMenu] = useState(false);
-  
+
   // Header filters
   const [searchParams] = useSearchParams();
   const [propertyFilter, setPropertyFilter] = useState(() => searchParams.get('property') || '');
@@ -91,12 +91,12 @@ export function Transactions() {
       supabase.from('properties').select('*').eq('user_id', user.id).order('name', { ascending: true }),
       supabase.from('bank_accounts').select('*').eq('user_id', user.id),
     ]);
-    
+
     const cats = (catResult.data || []).sort((a, b) => a.name.localeCompare(b.name));
     const props = propResult.data || [];
     const banks = bankResult.data || [];
     let txs = txResult.data || [];
-    
+
     if (txs.length > 0) {
       txs = txs.map(tx => ({
         ...tx,
@@ -167,12 +167,12 @@ export function Transactions() {
       if (notesFilter === 'no_notes' && tx.notes) return false;
       return true;
     });
-    
+
     result.sort((a, b) => {
       const cmp = a.date.localeCompare(b.date);
       return dateSortDir === 'asc' ? cmp : -cmp;
     });
-    
+
     return result;
   }, [transactions, statusFilter, searchQuery, sourceFilter, dateStart, dateEnd, dateSortDir, propertyFilter, categoryFilter, notesFilter]);
 
@@ -220,7 +220,7 @@ export function Transactions() {
   const updateTransaction = async (id: string, updates: Partial<Transaction>, promptRule = true) => {
     const tx = transactions.find(t => t.id === id);
     await supabase.from('transactions').update(updates).eq('id', id);
-    
+
     // Prompt to create rule on categorization
     if (promptRule && updates.category_id && tx && !tx.category_id) {
       const cat = categories.find(c => c.id === updates.category_id);
@@ -228,17 +228,17 @@ export function Transactions() {
         setCreateRulePrompt({ show: true, transaction: tx, category: cat });
       }
     }
-    
+
     await loadData();
     setSelectedTx(null);
   };
 
   const createRuleFromCategorization = async () => {
     if (!createRulePrompt.transaction || !createRulePrompt.category) return;
-    
+
     const desc = createRulePrompt.transaction.description_clean || createRulePrompt.transaction.description || '';
     const pattern = desc.split(' ').slice(0, 3).join(' ').toLowerCase();
-    
+
     await supabase.from('categorisation_rules').insert({
       user_id: user!.id,
       name: `Auto: ${createRulePrompt.category.name}`,
@@ -248,13 +248,13 @@ export function Transactions() {
       priority: 0,
       is_active: true,
     });
-    
+
     setCreateRulePrompt({ show: false, transaction: null, category: null });
   };
 
   const applySuggestion = async () => {
     if (selectedTx && aiSuggestion.category) {
-      await updateTransaction(selectedTx.id, { 
+      await updateTransaction(selectedTx.id, {
         category_id: aiSuggestion.category.id,
         ai_category_suggestion: aiSuggestion.category.id,
         ai_confidence: aiSuggestion.confidence,
@@ -272,19 +272,19 @@ export function Transactions() {
   const uploadAttachment = async (txId: string, file: File) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${txId}/${Date.now()}.${fileExt}`;
-    
+
     const { error: uploadError } = await supabase.storage
       .from('attachments')
       .upload(fileName, file);
-    
+
     if (uploadError) {
       console.error('Upload error:', uploadError);
       alert('Failed to upload attachment');
       return;
     }
-    
+
     const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(fileName);
-    
+
     const tx = transactions.find(t => t.id === txId);
     const currentAttachments: Attachment[] = (tx?.attachments as Attachment[]) || [];
     const newAttachment: Attachment = {
@@ -295,11 +295,11 @@ export function Transactions() {
       size: file.size,
       uploaded_at: new Date().toISOString(),
     };
-    
+
     await supabase.from('transactions').update({
       attachments: [...currentAttachments, newAttachment],
     }).eq('id', txId);
-    
+
     await loadData();
     if (selectedTx?.id === txId) {
       setSelectedTx({ ...selectedTx, attachments: [...currentAttachments, newAttachment] });
@@ -333,17 +333,17 @@ export function Transactions() {
   // Detect column indices from headers (supports English and Spanish)
   const detectColumns = (headerLine: string): { date: number; description: number; amount: number } | null => {
     const headers = headerLine.split(/[,;\t]/).map(h => h.toLowerCase().replace(/"/g, '').trim());
-    
-    const dateIdx = headers.findIndex(h => 
+
+    const dateIdx = headers.findIndex(h =>
       ['date', 'fecha', 'fecha operacion', 'fecha valor', 'f.operacion', 'f.valor'].includes(h)
     );
-    const descIdx = headers.findIndex(h => 
+    const descIdx = headers.findIndex(h =>
       ['description', 'concepto', 'descripcion', 'descripción', 'movimiento', 'detalle'].includes(h)
     );
-    const amountIdx = headers.findIndex(h => 
+    const amountIdx = headers.findIndex(h =>
       ['amount', 'importe', 'cantidad', 'monto', 'valor', 'debito', 'credito'].includes(h)
     );
-    
+
     if (dateIdx === -1 || descIdx === -1 || amountIdx === -1) return null;
     return { date: dateIdx, description: descIdx, amount: amountIdx };
   };
@@ -353,7 +353,7 @@ export function Transactions() {
     const result: string[] = [];
     let current = '';
     let inQuotes = false;
-    
+
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
       if (char === '"') {
@@ -403,10 +403,10 @@ export function Transactions() {
     try {
       const text = await file.text();
       const lines = text.split('\n').filter(l => l.trim());
-      
+
       // Get existing hashes
       const existingHashes = new Set(transactions.map(t => t.hash).filter(Boolean));
-      
+
       const newTxs: Array<{
         user_id: string;
         date: string;
@@ -419,43 +419,43 @@ export function Transactions() {
         property_id?: string;
         hash: string;
       }> = [];
-      
+
       let duplicateCount = 0;
-      
+
       // Try structured parsing with column detection
       const columns = detectColumns(lines[0]);
-      
+
       if (columns) {
         // Structured CSV with headers
         for (let i = 1; i < lines.length; i++) {
           const fields = parseCSVLine(lines[i]);
           if (fields.length <= Math.max(columns.date, columns.description, columns.amount)) continue;
-          
+
           const dateStr = fields[columns.date];
           const description = fields[columns.description]?.replace(/"/g, '').trim();
           const amountStr = fields[columns.amount];
-          
+
           if (!dateStr || !description || !amountStr) continue;
-          
+
           const isoDate = parseDate(dateStr);
           const amount = parseSpanishAmount(amountStr);
-          
+
           if (amount === 0) continue;
-          
+
           const hash = generateTransactionHash(isoDate, description, amount);
-          
+
           if (existingHashes.has(hash)) {
             duplicateCount++;
             continue;
           }
           existingHashes.add(hash);
-          
+
           const descClean = normalizeVendor(description);
           const descLower = description.toLowerCase();
-          const matchedProp = properties.find(p => 
+          const matchedProp = properties.find(p =>
             p.keywords?.some(kw => descLower.includes(kw.toLowerCase()))
           );
-          
+
           newTxs.push({
             user_id: user.id,
             date: isoDate,
@@ -472,26 +472,26 @@ export function Transactions() {
       } else {
         // Fallback: raw line parsing
         const startIdx = lines[0]?.toLowerCase().includes('date') || lines[0]?.toLowerCase().includes('fecha') ? 1 : 0;
-        
+
         for (let i = startIdx; i < lines.length; i++) {
           const parsed = parseRawLine(lines[i]);
           if (parsed && parsed.amount !== 0) {
             const isoDate = parseDate(parsed.date);
-            
+
             const hash = generateTransactionHash(isoDate, parsed.description, parsed.amount);
-            
+
             if (existingHashes.has(hash)) {
               duplicateCount++;
               continue;
             }
             existingHashes.add(hash);
-            
+
             const descClean = normalizeVendor(parsed.description);
             const descLower = parsed.description.toLowerCase();
-            const matchedProp = properties.find(p => 
+            const matchedProp = properties.find(p =>
               p.keywords?.some(kw => descLower.includes(kw.toLowerCase()))
             );
-            
+
             newTxs.push({
               user_id: user.id,
               date: isoDate,
@@ -521,9 +521,9 @@ export function Transactions() {
           .eq('user_id', user.id)
           .eq('enabled', true)
           .order('priority', { ascending: false });
-        
+
         const advancedRules = advancedRulesData || [];
-        
+
         // Fetch standard categorization rules
         const { data: rulesData } = await supabase
           .from('categorisation_rules')
@@ -531,9 +531,9 @@ export function Transactions() {
           .eq('user_id', user.id)
           .eq('is_active', true)
           .order('priority', { ascending: false });
-        
+
         const activeRules = rulesData || [];
-        
+
         // Group transactions by normalized description + month for ordinal logic
         const txGroups: Record<string, typeof newTxs> = {};
         newTxs.forEach(tx => {
@@ -545,7 +545,7 @@ export function Transactions() {
         });
         // Sort each group by date
         Object.values(txGroups).forEach(group => group.sort((a, b) => a.date.localeCompare(b.date)));
-        
+
         // Apply rules to each transaction
         const txsWithCategories = newTxs.map(tx => {
           const desc = tx.description?.toLowerCase() || '';
@@ -555,7 +555,7 @@ export function Transactions() {
           const groupKey = `${descNorm}|${monthYear}`;
           const group = txGroups[groupKey] || [];
           const ordinalPos = group.findIndex(t => t === tx) + 1;
-          
+
           // Check ADVANCED rules first
           for (const advRule of advancedRules) {
             // Check description match
@@ -567,10 +567,10 @@ export function Transactions() {
               case 'regex': try { descMatches = new RegExp(advRule.description_match, 'i').test(desc); } catch { descMatches = false; } break;
             }
             if (!descMatches) continue;
-            
+
             // Check provider match (if set)
             if (advRule.provider_match && tx.source !== advRule.provider_match) continue;
-            
+
             // Check date logic
             let dateMatches = false;
             try {
@@ -583,14 +583,14 @@ export function Transactions() {
             } catch {
               dateMatches = false; // Safe fail
             }
-            
+
             if (dateMatches && advRule.property_id) {
               console.log(`[Advanced Rule] "${advRule.rule_name}" matched tx: ${tx.description} -> property: ${advRule.property_id}`);
               advancedRuleMatchCount++;
               return { ...tx, property_id: advRule.property_id };
             }
           }
-          
+
           // Then check standard rules
           for (const rule of activeRules) {
             let matches = false;
@@ -615,7 +615,7 @@ export function Transactions() {
           }
           return tx;
         });
-        
+
         const { error } = await supabase.from('transactions').insert(txsWithCategories);
         if (error) {
           console.error('Insert error:', error);
@@ -624,7 +624,7 @@ export function Transactions() {
           importedCount = newTxs.length;
         }
       }
-      
+
       setUploadSummary({
         show: true,
         imported: importedCount,
@@ -633,8 +633,8 @@ export function Transactions() {
         autoCategorized: autoCategorizedCount,
         advancedRuleMatches: advancedRuleMatchCount,
       });
-      
-      supabase.storage.from('bank-files').upload(`${user.id}/${Date.now()}_${file.name}`, file).catch(() => {});
+
+      supabase.storage.from('bank-files').upload(`${user.id}/${Date.now()}_${file.name}`, file).catch(() => { });
       await loadData();
     } catch (e) {
       console.error('Upload error:', e);
@@ -644,7 +644,7 @@ export function Transactions() {
     }
   };
 
-  
+
 
   // Export functions
   const handleExportCSV = () => {
@@ -666,7 +666,7 @@ export function Transactions() {
   const handleExportPDF = () => {
     const totalIncome = filteredTxs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
     const totalExpense = filteredTxs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
-    
+
     const content = `
       <h1>PropLedger Transaction Report</h1>
       <p>Generated: ${new Date().toLocaleDateString()}</p>
@@ -706,17 +706,17 @@ export function Transactions() {
         </tbody>
       </table>
     `;
-    
+
     exportToPDF('PropLedger Transaction Report', content);
     setShowExportMenu(false);
   };
 
-  
+
 
   const categoryOptions = categories
     .filter(c => !selectedTx || c.type === selectedTx.type)
     .map(c => ({ value: c.id, label: c.name }));
-  
+
   const propertyOptions = properties.map(p => ({ value: p.id, label: p.name }));
 
   return (
@@ -788,11 +788,10 @@ export function Transactions() {
         <div className="relative">
           <button
             onClick={() => setShowFiltersPanel(!showFiltersPanel)}
-            className={`flex items-center gap-2 px-3 py-2 border rounded-lg transition-colors text-sm ${
-              activeFilterCount > 0
-                ? 'border-brand-300 bg-brand-50 text-brand-700'
-                : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'
-            }`}
+            className={`flex items-center gap-2 px-3 py-2 border rounded-lg transition-colors text-sm ${activeFilterCount > 0
+              ? 'border-brand-300 bg-brand-50 text-brand-700'
+              : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'
+              }`}
           >
             <Filter className="w-4 h-4" />
             <span>Filters</span>
@@ -821,11 +820,10 @@ export function Transactions() {
                     <button
                       key={status}
                       onClick={() => setStatusFilter(status)}
-                      className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                        statusFilter === status
-                          ? 'bg-brand-500 text-white'
-                          : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                      }`}
+                      className={`px-3 py-1 text-xs rounded-full transition-colors ${statusFilter === status
+                        ? 'bg-brand-500 text-white'
+                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                        }`}
                     >
                       {status === 'all' ? 'All' : status.charAt(0).toUpperCase() + status.slice(1)}
                     </button>
@@ -862,11 +860,10 @@ export function Transactions() {
                     <button
                       key={opt.value}
                       onClick={() => setNotesFilter(opt.value)}
-                      className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                        notesFilter === opt.value
-                          ? 'bg-brand-500 text-white'
-                          : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                      }`}
+                      className={`px-3 py-1 text-xs rounded-full transition-colors ${notesFilter === opt.value
+                        ? 'bg-brand-500 text-white'
+                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                        }`}
                     >
                       {opt.label}
                     </button>
@@ -966,7 +963,7 @@ export function Transactions() {
             )}
           </div>
         </div>
-        
+
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mx-auto"></div>
@@ -976,10 +973,10 @@ export function Transactions() {
         ) : (
           <>
             {/* Fixed Header */}
-            <div className="grid grid-cols-[80px_1fr_100px] md:grid-cols-[100px_1fr_120px_140px_120px_80px] bg-neutral-50 border-b border-neutral-200 text-sm font-medium text-neutral-500">
+            <div className="grid grid-cols-[80px_1fr_100px] md:grid-cols-[100px_1fr_120px_140px_120px_80px] bg-neutral-50 border-b border-neutral-200 text-sm font-medium text-neutral-500 sticky top-0 z-10">
               {visibleColumns.date && (
                 <div className="px-2 md:px-4 py-3">
-                  <button 
+                  <button
                     onClick={() => setDateSortDir(d => d === 'asc' ? 'desc' : 'asc')}
                     className="flex items-center gap-1 hover:text-neutral-700"
                   >
@@ -1030,7 +1027,7 @@ export function Transactions() {
               {visibleColumns.amount && <div className="px-2 md:px-4 py-3 text-right">Amount</div>}
               {visibleColumns.actions && <div className="px-4 py-3 text-center hidden md:block">Actions</div>}
             </div>
-            
+
             {/* Virtualized Rows */}
             <div ref={tableContainerRef} className="max-h-[60vh] overflow-y-auto">
               <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
@@ -1062,12 +1059,14 @@ export function Transactions() {
                         </div>
                       )}
                       {visibleColumns.property && (
-                        <div className="px-4 py-3 hidden md:block">
-                          {tx.property_name ? (
-                            <span className="inline-block px-2 py-1 text-xs font-medium bg-brand-50 text-brand-700 rounded truncate max-w-full">
-                              {tx.property_name}
-                            </span>
-                          ) : <span className="text-neutral-400">-</span>}
+                        <div className="px-4 py-3 hidden md:block" onClick={(e) => e.stopPropagation()}>
+                          <TypeaheadSelect
+                            options={propertyOptions}
+                            value={tx.property_id || ''}
+                            onChange={async (val) => { await updateTransaction(tx.id, { property_id: val || null }, false); }}
+                            placeholder="Select"
+                            className="w-full"
+                          />
                         </div>
                       )}
                       {visibleColumns.category && (
@@ -1082,9 +1081,8 @@ export function Transactions() {
                         </div>
                       )}
                       {visibleColumns.amount && (
-                        <div className={`px-2 md:px-4 py-3 text-right font-mono font-medium text-xs md:text-sm ${
-                          tx.type === 'income' ? 'text-semantic-success' : 'text-neutral-700'
-                        }`}>
+                        <div className={`px-2 md:px-4 py-3 text-right font-mono font-medium text-xs md:text-sm ${tx.type === 'income' ? 'text-semantic-success' : 'text-neutral-700'
+                          }`}>
                           {tx.type === 'income' ? '+' : '-'}{formatCurrency(Math.abs(Number(tx.amount)))}
                         </div>
                       )}
@@ -1122,7 +1120,7 @@ export function Transactions() {
                 <X className="w-5 h-5 text-neutral-500" />
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-neutral-500 mb-1">Date</label>
@@ -1137,43 +1135,11 @@ export function Transactions() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-500 mb-1">Amount</label>
-                <p className={`text-xl font-mono font-bold ${
-                  selectedTx.type === 'income' ? 'text-semantic-success' : 'text-neutral-900'
-                }`}>
+                <p className={`text-xl font-mono font-bold ${selectedTx.type === 'income' ? 'text-semantic-success' : 'text-neutral-900'
+                  }`}>
                   {selectedTx.type === 'income' ? '+' : '-'}{formatCurrency(Math.abs(Number(selectedTx.amount)))}
                 </p>
               </div>
-              
-              {/* AI Suggestion */}
-              {selectedTx.status === 'pending' && !selectedTx.category_id && (
-                <div className="p-4 bg-brand-50 rounded-lg border border-brand-100">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-brand-500" />
-                    <span className="text-sm font-medium text-brand-700">AI Suggestion</span>
-                  </div>
-                  {aiSuggestion.loading ? (
-                    <div className="flex items-center gap-2 text-brand-600">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">Analyzing...</span>
-                    </div>
-                  ) : aiSuggestion.category ? (
-                    <div className="space-y-2">
-                      <p className="text-sm text-brand-600">
-                        Suggested: <strong>{aiSuggestion.category.name}</strong>
-                        {aiSuggestion.confidence > 0 && ` (${Math.round(aiSuggestion.confidence * 100)}%)`}
-                      </p>
-                      <button
-                        onClick={applySuggestion}
-                        className="px-3 py-1 text-sm bg-brand-500 text-white rounded hover:bg-brand-600"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-brand-600">{aiSuggestion.reasoning || 'No suggestion'}</p>
-                  )}
-                </div>
-              )}
 
               <div>
                 <label className="block text-sm font-medium text-neutral-500 mb-1">Category</label>
@@ -1228,7 +1194,7 @@ export function Transactions() {
               </div>
             </div>
 
-            
+
           </div>
         </div>
       )}

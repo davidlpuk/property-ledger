@@ -29,7 +29,7 @@ export function Dashboard() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<string>('');
-  
+
   // Initialize date range to current month
   const [dateStart, setDateStart] = useState(() => {
     const now = new Date();
@@ -64,7 +64,7 @@ export function Dashboard() {
     setBudgets(budgetResult.data || []);
     setProfile(profileResult.data);
     setLoading(false);
-    
+
     // Show welcome modal for first-time users (no transactions)
     const hasSeenWelcome = localStorage.getItem('propledger_welcome_seen');
     if (!hasSeenWelcome && (txResult.data || []).length === 0) {
@@ -88,10 +88,10 @@ export function Dashboard() {
     const start = new Date(dateRange.start);
     const end = new Date(dateRange.end);
     const duration = end.getTime() - start.getTime();
-    
+
     const prevEnd = new Date(start.getTime() - 1);
     const prevStart = new Date(prevEnd.getTime() - duration);
-    
+
     return { start: prevStart.toISOString().split('T')[0], end: prevEnd.toISOString().split('T')[0] };
   }, [dateRange]);
 
@@ -118,28 +118,28 @@ export function Dashboard() {
   const kpis = useMemo(() => {
     const expenses = filteredTxs.filter(t => t.type === 'expense');
     const prevExpenses = prevPeriodTxs.filter(t => t.type === 'expense');
-    
+
     const totalSpend = expenses.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
     const prevTotalSpend = prevExpenses.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
     const changePercent = prevTotalSpend > 0 ? ((totalSpend - prevTotalSpend) / prevTotalSpend) * 100 : 0;
-    
+
     // Category breakdown
     const categoryTotals: Record<string, number> = {};
     expenses.forEach(tx => {
       const catId = tx.category_id || 'uncategorized';
       categoryTotals[catId] = (categoryTotals[catId] || 0) + Math.abs(Number(tx.amount));
     });
-    
+
     const largestCategoryId = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0];
-    const largestCategory = largestCategoryId === 'uncategorized' 
-      ? 'Uncategorized' 
+    const largestCategory = largestCategoryId === 'uncategorized'
+      ? 'Uncategorized'
       : categories.find(c => c.id === largestCategoryId)?.name || 'Unknown';
-    
+
     const uncategorizedCount = expenses.filter(t => !t.category_id).length;
-    
+
     const totalIncome = filteredTxs.filter(t => t.type === 'income').reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
     const netIncome = totalIncome - totalSpend;
-    
+
     return {
       totalSpend,
       changePercent,
@@ -154,7 +154,7 @@ export function Dashboard() {
   const categoryChartData = useMemo(() => {
     const expenses = filteredTxs.filter(t => t.type === 'expense');
     const categoryTotals: Record<string, { value: number; id: string }> = {};
-    
+
     expenses.forEach(tx => {
       const cat = categories.find(c => c.id === tx.category_id);
       const name = cat?.name || 'Uncategorized';
@@ -162,7 +162,7 @@ export function Dashboard() {
       if (!categoryTotals[name]) categoryTotals[name] = { value: 0, id };
       categoryTotals[name].value += Math.abs(Number(tx.amount));
     });
-    
+
     return Object.entries(categoryTotals)
       .map(([name, data]) => ({ name, value: data.value, id: data.id }))
       .sort((a, b) => b.value - a.value);
@@ -178,13 +178,13 @@ export function Dashboard() {
     return categoryChartData.slice(0, 8);
   }, [categoryChartData]);
 
-  
+
 
   // Budget alerts
   const budgetAlerts = useMemo(() => {
     const now = new Date();
     const currentMonth = now.toISOString().slice(0, 7);
-    
+
     return budgets.map(b => {
       const relevantTxs = filteredTxs.filter(t => {
         if (t.type !== 'expense') return false;
@@ -192,10 +192,10 @@ export function Dashboard() {
         if (b.property_id && t.property_id !== b.property_id) return false;
         return true;
       });
-      
+
       const spent = relevantTxs.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
       const percentage = (spent / Number(b.amount)) * 100;
-      
+
       return {
         ...b,
         category_name: categories.find(c => c.id === b.category_id)?.name || 'All Categories',
@@ -286,7 +286,7 @@ export function Dashboard() {
             {properties.length} {properties.length === 1 ? 'property' : 'properties'} in portfolio
           </p>
         </div>
-        
+
         <div className="flex flex-wrap gap-3">
           {/* Property Filter */}
           <select
@@ -299,7 +299,7 @@ export function Dashboard() {
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          
+
           {/* Date Range Picker */}
           <DateRangePicker
             startDate={dateStart}
@@ -311,7 +311,10 @@ export function Dashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl p-6 shadow-card">
+        <Link
+          to="/transactions?type=expense"
+          className="bg-white rounded-xl p-6 shadow-card hover:shadow-md transition-shadow cursor-pointer"
+        >
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-neutral-500">Total Spend</span>
             {kpis.changePercent !== 0 && (
@@ -328,9 +331,12 @@ export function Dashboard() {
               {kpis.changePercent > 0 ? '+' : ''}{kpis.changePercent.toFixed(1)}% vs prev period
             </p>
           )}
-        </div>
-        
-        <div className="bg-white rounded-xl p-6 shadow-card">
+        </Link>
+
+        <Link
+          to="/transactions"
+          className="bg-white rounded-xl p-6 shadow-card hover:shadow-md transition-shadow cursor-pointer"
+        >
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-neutral-500">Net Income</span>
             {kpis.netIncome >= 0 ? (
@@ -342,20 +348,23 @@ export function Dashboard() {
           <p className={`text-2xl font-bold font-mono ${kpis.netIncome >= 0 ? 'text-semantic-success' : 'text-semantic-error'}`}>
             {formatCurrency(kpis.netIncome)}
           </p>
-        </div>
-        
-        <div className="bg-white rounded-xl p-6 shadow-card">
+        </Link>
+
+        <Link
+          to="/transactions?status=pending"
+          className="bg-white rounded-xl p-6 shadow-card hover:shadow-md transition-shadow cursor-pointer"
+        >
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-neutral-500">Uncategorized</span>
             <AlertCircle className={`w-5 h-5 ${kpis.uncategorizedCount > 0 ? 'text-amber-500' : 'text-neutral-300'}`} />
           </div>
           <p className="text-2xl font-bold text-neutral-900">{kpis.uncategorizedCount}</p>
           {kpis.uncategorizedCount > 0 && (
-            <Link to="/transactions?status=pending" className="text-sm text-brand-500 hover:text-brand-600">
+            <span className="text-sm text-brand-500 hover:text-brand-600">
               Review now
-            </Link>
+            </span>
           )}
-        </div>
+        </Link>
       </div>
 
       {/* Charts */}
@@ -417,9 +426,9 @@ export function Dashboard() {
                     <XAxisComponent type="number" tickFormatter={(v: number) => formatCurrency(v)} />
                     <YAxisComponent type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
                     <TooltipComponent formatter={(value: number) => formatCurrency(value)} />
-                    <BarComponent 
-                      dataKey="value" 
-                      fill="#6366f1" 
+                    <BarComponent
+                      dataKey="value"
+                      fill="#6366f1"
                       radius={[0, 4, 4, 0]}
                       onClick={(data: any) => {
                         const catId = data.id || data.payload?.id;
@@ -471,9 +480,9 @@ export function Dashboard() {
                     <XAxisComponent type="number" tickFormatter={(v: number) => formatCurrency(v)} />
                     <YAxisComponent type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
                     <TooltipComponent formatter={(value: number) => formatCurrency(value)} />
-                    <BarComponent 
-                      dataKey="value" 
-                      fill="#6366f1" 
+                    <BarComponent
+                      dataKey="value"
+                      fill="#6366f1"
                       radius={[0, 4, 4, 0]}
                       onClick={(data: any) => {
                         const catId = data.id || data.payload?.id;
@@ -515,22 +524,16 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Pending Review */}
+      {/* Pending Review - Simplified */}
       {pendingCount > 0 && (
-        <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-brand-500" />
-            <span className="text-sm font-medium text-brand-700">
-              {pendingCount} transaction{pendingCount !== 1 ? 's' : ''} pending categorization
-            </span>
-          </div>
-          <Link
-            to="/transactions?status=pending"
-            className="flex items-center gap-1 text-sm font-medium text-brand-500 hover:text-brand-600"
-          >
-            Review <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+        <Link
+          to="/transactions?status=pending"
+          className="flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700"
+        >
+          <AlertCircle className="w-4 h-4" />
+          {pendingCount} transaction{pendingCount !== 1 ? 's' : ''} pending categorization
+          <ArrowRight className="w-4 h-4" />
+        </Link>
       )}
 
       {/* Recent Transactions */}
@@ -545,8 +548,8 @@ export function Dashboard() {
           {transactions.length === 0 ? (
             <div className="p-8 text-center text-neutral-500">
               <p>No transactions yet.</p>
-              <button 
-                onClick={() => fileInputRef.current?.click()} 
+              <button
+                onClick={() => fileInputRef.current?.click()}
                 className="text-brand-500 hover:text-brand-600 mt-2 inline-block"
               >
                 Upload bank statement
