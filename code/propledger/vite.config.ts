@@ -25,11 +25,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Split vendor libraries into separate chunks
+          // Split vendor libraries into separate chunks (but NOT React - causes issues)
           if (id.includes('node_modules')) {
-            if (id.includes('react-dom') || id.includes('react-router')) {
-              return 'vendor-react';
-            }
             if (id.includes('recharts') || id.includes('d3-')) {
               return 'vendor-charts';
             }
