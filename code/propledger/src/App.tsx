@@ -11,7 +11,9 @@ import { supabase } from './lib/supabase';
 const Dashboard = React.lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
 const Transactions = React.lazy(() => import('./pages/Transactions').then(m => ({ default: m.Transactions })));
 const Taxes = React.lazy(() => import('./pages/Taxes').then(m => ({ default: m.Taxes })));
+const Reports = React.lazy(() => import('./pages/Reports').then(m => ({ default: m.Reports })));
 const Settings = React.lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+
 
 // Lazy load settings sub-sections
 const PropertiesSection = React.lazy(() => import('./components/settings/PropertiesSection').then(m => ({ default: m.PropertiesSection })));
@@ -46,7 +48,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
         .select('onboarding_completed')
         .eq('user_id', user.id)
         .single();
-      
+
       setNeedsOnboarding(!data?.onboarding_completed);
       setCheckingOnboarding(false);
     }
@@ -111,6 +113,14 @@ function App() {
               }
             />
             <Route
+              path="/reports"
+              element={
+                <ProtectedRoute>
+                  <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/settings"
               element={
                 <ProtectedRoute>
@@ -126,7 +136,7 @@ function App() {
               <Route path="tenants" element={<TenantsSection />} />
               <Route path="categories" element={<CategoriesSection />} />
             </Route>
-            
+
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Suspense>

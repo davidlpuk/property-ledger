@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Home, Receipt, FileText, LogOut, Menu, X, Settings } from 'lucide-react';
+import { Home, Receipt, FileText, LogOut, Menu, X, Settings, PieChart } from 'lucide-react';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: Home },
   { path: '/transactions', label: 'Transactions', icon: Receipt },
+  { path: '/reports', label: 'Reports', icon: PieChart },
   { path: '/taxes', label: 'Taxes', icon: FileText },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -27,17 +28,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <nav className="hidden md:flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.path || 
+                const isActive = location.pathname === item.path ||
                   (item.path === '/settings' && location.pathname.startsWith('/settings'));
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
                         ? 'text-brand-600 bg-brand-50'
                         : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-4 h-4" />
                     {item.label}
@@ -79,11 +79,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium ${
-                      isActive
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium ${isActive
                         ? 'text-brand-600 bg-brand-50'
                         : 'text-neutral-600 hover:bg-neutral-100'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-5 h-5" />
                     {item.label}
