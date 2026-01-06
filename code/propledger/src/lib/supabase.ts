@@ -71,9 +71,21 @@ export async function invokeEdgeFunctionWithFetch<T = unknown>(
     const { body } = options || {};
 
     try {
-        // Get the auth token
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
+        // Get the auth token - handle session errors gracefully
+        let token: string | undefined;
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            token = session?.access_token;
+        } catch (sessionError) {
+            // Session might be expired - try to refresh
+            try {
+                const { data: { session } } = await supabase.auth.refreshSession();
+                token = session?.access_token;
+            } catch {
+                // If refresh fails, continue without token
+                console.warn('Could not refresh session for Edge Function call');
+            }
+        }
 
         const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
             method: 'POST',

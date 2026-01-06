@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase, invokeEdgeFunctionWithFetch } from '../../lib/supabase';
+import { supabase, invokeEdgeFunction } from '../../lib/supabase';
 import { Trash2, Download, X, Check, Loader2, ChevronRight, Database } from 'lucide-react';
 
 type DeleteStep = 'warning' | 'processing' | 'confirm' | 'success';
@@ -114,15 +114,16 @@ export function DeleteAccountSection() {
         setError(null);
 
         try {
-            // Call the delete account API - use fetch method for better error handling
-            const { data, error: apiError, status } = await invokeEdgeFunctionWithFetch('delete-account', {
+            // Call the delete account API with proper error handling
+            const { data, error: apiError } = await invokeEdgeFunction('delete-account', {
                 body: {},
             });
 
             if (apiError) {
-                console.error('Delete API Error:', apiError, 'Status:', status, 'Response data:', data);
+                console.error('Delete API Error:', apiError, 'Response data:', data);
                 // Use the response data as the error message if available
-                const errorMessage = (data as any)?.error || (data as any)?.message || apiError.message || `Failed to delete account (status: ${status}). Please try again.`;
+                const errorData = data as { error?: string; message?: string };
+                const errorMessage = errorData?.error || errorData?.message || apiError.message || 'Failed to delete account. Please try again.';
                 throw new Error(errorMessage);
             }
 
