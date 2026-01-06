@@ -3,23 +3,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Trash2, Download, X, Check, Loader2, ChevronRight, Database } from 'lucide-react';
 
-type DeleteStep = 'warning' | 'feedback' | 'processing' | 'confirm' | 'success';
-
-const LEAVING_REASONS = [
-    { id: 'expensive', label: 'Too expensive' },
-    { id: 'missing_features', label: 'Missing features I need' },
-    { id: 'switched', label: 'Switched to another app' },
-    { id: 'not_use', label: 'Don\'t use it enough' },
-    { id: 'bugs', label: 'Too many bugs or issues' },
-    { id: 'other', label: 'Other' },
-];
+type DeleteStep = 'warning' | 'processing' | 'confirm' | 'success';
 
 export function DeleteAccountSection() {
     const { user, signOut } = useAuth();
     const [step, setStep] = useState<DeleteStep>('warning');
     const [confirmText, setConfirmText] = useState('');
-    const [selectedReason, setSelectedReason] = useState('');
-    const [feedbackText, setFeedbackText] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
@@ -127,10 +116,7 @@ export function DeleteAccountSection() {
         try {
             // Call the delete account API
             const { data, error: apiError } = await supabase.functions.invoke('delete-account', {
-                body: {
-                    reason: selectedReason,
-                    feedback: feedbackText,
-                },
+                body: {},
             });
 
             if (apiError) throw apiError;
@@ -148,7 +134,7 @@ export function DeleteAccountSection() {
             }, 3000);
         } catch (err: any) {
             console.error('Delete error:', err);
-            setError(err.message || 'Failed to initiate account deletion. Please try again.');
+            setError(err.message || 'Failed to delete account. Please try again.');
             setLoading(false);
         }
     };
@@ -282,72 +268,20 @@ export function DeleteAccountSection() {
                     Cancel
                 </button>
                 <button
-                    onClick={() => setStep('feedback')}
-                    disabled={confirmText.toLowerCase() !== user?.email?.toLowerCase()}
-                    className="flex-1 py-3 px-4 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Continue
-                </button>
-            </div>
-        </div>
-    );
-
-    const renderFeedbackStep = () => (
-        <div className="space-y-6">
-            <div className="text-center">
-                <h3 className="text-lg font-semibold text-neutral-900">One last thing...</h3>
-                <p className="text-neutral-600 mt-2">
-                    We'd love to know why you're leaving. This is completely optional and helps us improve.
-                </p>
-            </div>
-
-            <div className="space-y-2">
-                {LEAVING_REASONS.map((reason) => (
-                    <button
-                        key={reason.id}
-                        onClick={() => setSelectedReason(reason.id)}
-                        className={`w-full p-3 text-left rounded-lg border transition-colors ${selectedReason === reason.id
-                            ? 'border-brand-500 bg-brand-50 text-brand-700'
-                            : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
-                            }`}
-                    >
-                        {reason.label}
-                    </button>
-                ))}
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Additional feedback (optional)
-                </label>
-                <textarea
-                    value={feedbackText}
-                    onChange={(e) => setFeedbackText(e.target.value)}
-                    placeholder="Tell us more about what we could have done better..."
-                    rows={4}
-                    className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-            </div>
-
-            <div className="flex gap-3">
-                <button
-                    onClick={() => setStep('confirm')}
-                    className="flex-1 py-3 px-4 border border-neutral-200 text-neutral-700 font-medium rounded-lg hover:bg-neutral-50 transition-colors"
-                >
-                    Skip
-                </button>
-                <button
                     onClick={handleInitiateDelete}
-                    disabled={loading}
-                    className="flex-1 py-3 px-4 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                    disabled={confirmText.toLowerCase() !== user?.email?.toLowerCase() || loading}
+                    className="flex-1 py-3 px-4 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {loading ? (
-                        <span className="flex items-center justify-center gap-2">
+                        <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            Processing...
-                        </span>
+                            Deleting...
+                        </>
                     ) : (
-                        'Delete My Account'
+                        <>
+                            <Trash2 className="w-4 h-4" />
+                            Delete My Account
+                        </>
                     )}
                 </button>
             </div>
@@ -393,7 +327,6 @@ export function DeleteAccountSection() {
             <div className="p-6">
                 {step === 'warning' && renderWarningStep()}
                 {step === 'confirm' && renderConfirmStep()}
-                {step === 'feedback' && renderFeedbackStep()}
                 {step === 'processing' && renderProcessingStep()}
                 {step === 'success' && renderSuccessStep()}
             </div>
