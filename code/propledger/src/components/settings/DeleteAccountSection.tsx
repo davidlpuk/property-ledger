@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { AlertTriangle, Trash2, Download, X, Check, Loader2, ChevronRight } from 'lucide-react';
+import { Trash2, Download, X, Check, Loader2, ChevronRight, Database } from 'lucide-react';
 
 type DeleteStep = 'warning' | 'feedback' | 'processing' | 'confirm' | 'success';
 
@@ -117,14 +117,7 @@ export function DeleteAccountSection() {
 
     const canDelete = () => {
         if (hasActiveSubscription) return false;
-        if (!lastExportDate) return false;
-
-        // Check if export was within last 24 hours
-        const exportTime = new Date(lastExportDate).getTime();
-        const now = Date.now();
-        const hoursSinceExport = (now - exportTime) / (1000 * 60 * 60);
-
-        return hoursSinceExport < 24;
+        return true; // Export is now optional
     };
 
     const handleInitiateDelete = async () => {
@@ -163,20 +156,20 @@ export function DeleteAccountSection() {
     const renderWarningStep = () => (
         <div className="space-y-6">
             <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 bg-neutral-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Database className="w-6 h-6 text-neutral-600" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-semibold text-neutral-900">Delete Account and Data</h3>
+                    <h3 className="text-lg font-semibold text-neutral-900">Data Management</h3>
                     <p className="text-neutral-600 mt-1">
-                        This action is permanent and cannot be undone. All your property data, transactions, and settings will be permanently removed.
+                        Manage your account data and optionally export it before making changes.
                     </p>
                 </div>
             </div>
 
             {/* Prerequisites Check */}
             <div className="border border-neutral-200 rounded-lg p-4 space-y-3">
-                <h4 className="font-medium text-neutral-900">Before you proceed:</h4>
+                <h4 className="font-medium text-neutral-900">Account Status:</h4>
 
                 {/* Subscription Check */}
                 <div className="flex items-center gap-3">
@@ -197,35 +190,15 @@ export function DeleteAccountSection() {
                     )}
                 </div>
 
-                {/* Export Check */}
-                <div className="flex items-center gap-3">
-                    {canDelete() ? (
-                        <>
-                            <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                                <Check className="w-4 h-4 text-green-600" />
-                            </div>
-                            <span className="text-green-700">Data export completed within 24 hours</span>
-                        </>
-                    ) : (
-                        <>
-                            <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
-                                <X className="w-4 h-4 text-amber-600" />
-                            </div>
-                            <span className="text-amber-700">
-                                {lastExportDate
-                                    ? 'Data export expired. Please export again.'
-                                    : 'Data export required before deletion.'}
-                            </span>
-                        </>
-                    )}
-                </div>
-
-                {/* Export Button */}
-                {!canDelete() && (
+                {/* Export Section - Optional */}
+                <div className="pt-2">
+                    <p className="text-sm text-neutral-600 mb-2">
+                        Want to backup your data before making changes? (Optional)
+                    </p>
                     <button
                         onClick={handleExportData}
                         disabled={loading}
-                        className="mt-2 flex items-center gap-2 px-4 py-2 bg-brand-50 text-brand-600 rounded-lg hover:bg-brand-100 transition-colors text-sm font-medium"
+                        className="flex items-center gap-2 px-4 py-2 bg-brand-50 text-brand-600 rounded-lg hover:bg-brand-100 transition-colors text-sm font-medium"
                     >
                         {loading ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -234,14 +207,19 @@ export function DeleteAccountSection() {
                         )}
                         Export My Data
                     </button>
-                )}
+                    {lastExportDate && (
+                        <p className="text-xs text-neutral-500 mt-2">
+                            Last exported: {new Date(lastExportDate).toLocaleDateString()}
+                        </p>
+                    )}
+                </div>
             </div>
 
             {/* Next Button */}
             <button
                 onClick={() => setStep('confirm')}
                 disabled={!canDelete()}
-                className="w-full py-3 px-4 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-brand-600 text-white font-medium rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
                 Continue to Confirmation
                 <ChevronRight className="w-4 h-4" />
@@ -406,9 +384,9 @@ export function DeleteAccountSection() {
     return (
         <div className="bg-white rounded-xl shadow-card overflow-hidden">
             <div className="p-6 border-b border-neutral-100">
-                <h2 className="text-lg font-semibold text-neutral-900">Danger Zone</h2>
+                <h2 className="text-lg font-semibold text-neutral-900">Data Management</h2>
                 <p className="text-sm text-neutral-500 mt-1">
-                    Irreversible actions for your account
+                    Manage and export your account data
                 </p>
             </div>
 

@@ -588,6 +588,7 @@ export function CategoryManager() {
                     type: data.type,
                     icon: data.icon,
                     colour: data.colour,
+                    updated_at: new Date().toISOString(),
                 })
                 .eq('id', editingId);
 

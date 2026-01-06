@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Landmark, Wand2, PiggyBank, Users, Tag, Calendar, User, ChevronDown, AlertTriangle } from 'lucide-react';
+import { Building2, Landmark, Wand2, PiggyBank, Users, Tag, Calendar, User, ChevronDown, Database } from 'lucide-react';
 
 // Import section components
 import { PropertiesSection } from '../components/settings/PropertiesSection';
@@ -120,8 +120,8 @@ export function Settings() {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-left ${isActive
-                      ? 'bg-brand-50 text-brand-600'
-                      : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
+                    ? 'bg-brand-50 text-brand-600'
+                    : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
                     }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -130,17 +130,17 @@ export function Settings() {
               );
             })}
 
-            {/* Danger Zone Section */}
+            {/* Data Management Section */}
             <div className="border-t border-neutral-200 mt-2 pt-2">
               <button
                 onClick={() => setActiveTab('danger')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-left ${activeTab === 'danger'
-                    ? 'bg-red-50 text-red-600'
-                    : 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                  ? 'bg-brand-50 text-brand-600'
+                  : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
                   }`}
               >
-                <AlertTriangle className="w-5 h-5" />
-                Danger Zone
+                <Database className="w-5 h-5" />
+                Data Management
               </button>
             </div>
           </div>
