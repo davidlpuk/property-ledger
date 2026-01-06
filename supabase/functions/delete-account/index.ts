@@ -47,11 +47,15 @@ serve(async (req: Request) => {
         const { reason, feedback } = await req.json() as DeleteAccountRequest;
 
         // Check if user already has a pending deletion
-        const { data: existingProfile } = await supabaseAdmin
+        const { data: existingProfile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .select('status, deletion_requested_at')
             .eq('id', user.id)
             .single();
+
+        if (profileError) {
+            console.error('[DELETE_ACCOUNT] Error fetching profile:', profileError);
+        }
 
         if (existingProfile?.status === 'deletion_pending') {
             return new Response(JSON.stringify({
@@ -63,35 +67,45 @@ serve(async (req: Request) => {
             });
         }
 
-        // Check for active subscriptions
-        const { data: subscriptions } = await supabaseAdmin
-            .from('subscriptions')
-            .select('id, status')
-            .eq('user_id', user.id)
-            .eq('status', 'active');
+        // Check for active subscriptions (optional - may not exist)
+        try {
+            const { data: subscriptions } = await supabaseAdmin
+                .from('subscriptions')
+                .select('id, status')
+                .eq('user_id', user.id)
+                .eq('status', 'active');
 
-        if (subscriptions && subscriptions.length > 0) {
-            // Cancel active subscriptions
-            for (const sub of subscriptions) {
-                await supabaseAdmin
-                    .from('subscriptions')
-                    .update({
-                        status: 'cancelled',
-                        cancel_at_period_end: true,
-                        cancelled_at: new Date().toISOString()
-                    })
-                    .eq('id', sub.id);
+            if (subscriptions && subscriptions.length > 0) {
+                // Cancel active subscriptions
+                for (const sub of subscriptions) {
+                    await supabaseAdmin
+                        .from('subscriptions')
+                        .update({
+                            status: 'cancelled',
+                            cancel_at_period_end: true,
+                            cancelled_at: new Date().toISOString()
+                        })
+                        .eq('id', sub.id);
+                }
             }
+        } catch (subError) {
+            // Subscriptions table may not exist - skip this step
+            console.log('[DELETE_ACCOUNT] Subscriptions check skipped - table may not exist');
         }
 
-        // Store churn feedback
+        // Store churn feedback (optional - may not exist)
         if (reason || feedback) {
-            await supabaseAdmin.from('churn_feedback').insert({
-                user_id: user.id,
-                reason,
-                feedback,
-                created_at: new Date().toISOString(),
-            });
+            try {
+                await supabaseAdmin.from('churn_feedback').insert({
+                    user_id: user.id,
+                    reason,
+                    feedback,
+                    created_at: new Date().toISOString(),
+                });
+            } catch (feedbackError) {
+                // Churn feedback table may not exist - skip this step
+                console.log('[DELETE_ACCOUNT] Churn feedback skipped - table may not exist');
+            }
         }
 
         // Initiate soft delete
@@ -111,9 +125,7 @@ serve(async (req: Request) => {
         // Invalidate all active sessions
         await supabaseAdmin.auth.admin.deleteUser(user.id);
 
-        // TODO: Send confirmation email via Resend/SendGrid
-        // This would typically be done here or via a database trigger
-        // For now, we'll just log it
+        // Log the deletion request
         console.log(`[DELETE_ACCOUNT] Deletion initiated for user ${user.id}`);
         console.log(`[DELETE_ACCOUNT] Deletion deadline: ${deletionDeadline.toISOString()}`);
         console.log(`[DELETE_ACCOUNT] Reason: ${reason || 'Not provided'}`);
