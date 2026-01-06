@@ -58,15 +58,54 @@ export function DeleteAccountSection() {
     const handleExportData = async () => {
         setLoading(true);
         try {
-            // Trigger data export
-            const { error } = await supabase
+            // Fetch all user data
+            const userId = user!.id;
+
+            // Fetch data from all tables
+            const [properties, transactions, categories, rules, budgets, bankAccounts, profiles, tenants] = await Promise.all([
+                supabase.from('properties').select('*').eq('user_id', userId),
+                supabase.from('transactions').select('*').eq('user_id', userId),
+                supabase.from('categories').select('*').eq('user_id', userId),
+                supabase.from('categorisation_rules').select('*').eq('user_id', userId),
+                supabase.from('budgets').select('*').eq('user_id', userId),
+                supabase.from('bank_accounts').select('*').eq('user_id', userId),
+                supabase.from('profiles').select('*').eq('id', userId).single(),
+                supabase.from('tenants').select('*').eq('user_id', userId),
+            ]);
+
+            // Compile all data
+            const exportData = {
+                exportDate: new Date().toISOString(),
+                userEmail: user?.email,
+                profiles: profiles.data,
+                properties: properties.data || [],
+                transactions: transactions.data || [],
+                categories: categories.data || [],
+                categorisationRules: rules.data || [],
+                budgets: budgets.data || [],
+                bankAccounts: bankAccounts.data || [],
+                tenants: tenants.data || [],
+            };
+
+            // Create and trigger download
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `property-ledger-export-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Update export timestamp
+            await supabase
                 .from('profiles')
                 .update({ last_data_export_at: new Date().toISOString() })
-                .eq('id', user!.id);
+                .eq('id', userId);
 
-            if (error) throw error;
-
-            setLastExportDate(new Date().toISOString());
+            // Refresh the export date from database to ensure UI updates
+            await checkLastExportDate();
             setShowExportReminder(false);
         } catch (err) {
             console.error('Export error:', err);
@@ -290,8 +329,8 @@ export function DeleteAccountSection() {
                         key={reason.id}
                         onClick={() => setSelectedReason(reason.id)}
                         className={`w-full p-3 text-left rounded-lg border transition-colors ${selectedReason === reason.id
-                                ? 'border-brand-500 bg-brand-50 text-brand-700'
-                                : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
+                            ? 'border-brand-500 bg-brand-50 text-brand-700'
+                            : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
                             }`}
                     >
                         {reason.label}
