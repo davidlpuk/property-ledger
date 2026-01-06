@@ -119,9 +119,12 @@ export function DeleteAccountSection() {
                 body: {},
             });
 
-            if (apiError) throw apiError;
+            if (apiError) {
+                console.error('Delete API Error:', apiError);
+                throw apiError;
+            }
 
-            setStep('processing');
+            console.log('Delete response:', data);
 
             // Wait a moment to show processing state
             await new Promise(resolve => setTimeout(resolve, 2000));
@@ -134,7 +137,9 @@ export function DeleteAccountSection() {
             }, 3000);
         } catch (err: any) {
             console.error('Delete error:', err);
-            setError(err.message || 'Failed to delete account. Please try again.');
+            // Show more detailed error message
+            const errorMessage = err.message || err.error_description || 'Failed to delete account. Please try again.';
+            setError(errorMessage);
             setLoading(false);
         }
     };
