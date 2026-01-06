@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { supabase, invokeEdgeFunctionWithFetch } from '../../lib/supabase';
 import { Trash2, Download, X, Check, Loader2, ChevronRight, Database } from 'lucide-react';
 
 type DeleteStep = 'warning' | 'processing' | 'confirm' | 'success';
@@ -114,14 +114,16 @@ export function DeleteAccountSection() {
         setError(null);
 
         try {
-            // Call the delete account API
-            const { data, error: apiError } = await supabase.functions.invoke('delete-account', {
+            // Call the delete account API - use fetch method for better error handling
+            const { data, error: apiError, status } = await invokeEdgeFunctionWithFetch('delete-account', {
                 body: {},
             });
 
             if (apiError) {
-                console.error('Delete API Error:', apiError);
-                throw apiError;
+                console.error('Delete API Error:', apiError, 'Status:', status, 'Response data:', data);
+                // Use the response data as the error message if available
+                const errorMessage = (data as any)?.error || (data as any)?.message || apiError.message || `Failed to delete account (status: ${status}). Please try again.`;
+                throw new Error(errorMessage);
             }
 
             console.log('Delete response:', data);

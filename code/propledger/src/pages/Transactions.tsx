@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { supabase } from '../lib/supabase';
+import { supabase, invokeEdgeFunction } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency, formatDate } from '../lib/format';
 import { Transaction, Category, Property, BankAccount, Attachment } from '../lib/types';
@@ -127,19 +127,25 @@ export function Transactions() {
   const fetchAISuggestion = async (tx: Transaction) => {
     setAiSuggestion({ category: null, confidence: 0, reasoning: '', loading: true });
     try {
-      const { data, error } = await supabase.functions.invoke('categorize-transaction', {
+      const { data, error } = await invokeEdgeFunction('categorize-transaction', {
         body: {
           description: tx.description,
           amount: tx.type === 'income' ? Math.abs(Number(tx.amount)) : -Math.abs(Number(tx.amount)),
           categories: categories.map(c => ({ id: c.id, name: c.name, type: c.type })),
         },
       });
-      if (error) throw error;
-      const result = data?.data || data;
+
+      if (error) {
+        console.error('AI suggestion error:', error);
+        setAiSuggestion({ category: null, confidence: 0, reasoning: 'Unable to get suggestion', loading: false });
+        return;
+      }
+
+      const result = (data as any)?.data || data;
       setAiSuggestion({
-        category: result.suggested_category,
-        confidence: result.confidence || 0,
-        reasoning: result.reasoning || '',
+        category: result?.suggested_category,
+        confidence: result?.confidence || 0,
+        reasoning: result?.reasoning || '',
         loading: false,
       });
     } catch (e) {
