@@ -37,6 +37,7 @@
     "noUncheckedSideEffectImports": false
   },
   "include": [
-    "src"
+    "src",
+    "src/types"
   ]
 }

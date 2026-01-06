@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { Onboarding } from './components/Onboarding';
@@ -33,13 +33,19 @@ function PageLoader() {
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, isDemo } = useAuth();
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
     async function checkOnboarding() {
       if (!user) {
+        setCheckingOnboarding(false);
+        return;
+      }
+      // Skip onboarding check in demo mode
+      if (isDemo) {
+        setNeedsOnboarding(false);
         setCheckingOnboarding(false);
         return;
       }
@@ -53,7 +59,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       setCheckingOnboarding(false);
     }
     if (!loading) checkOnboarding();
-  }, [user, loading]);
+  }, [user, loading, isDemo]);
 
   if (loading || checkingOnboarding) {
     return (
@@ -80,6 +86,30 @@ function HomeRoute() {
   return user ? <Navigate to="/dashboard" replace /> : <LandingPage />;
 }
 
+// Demo mode callback - enables demo and redirects to dashboard
+function DemoCallback() {
+  const { enableDemoMode, user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    enableDemoMode();
+    // Small delay to ensure state is updated before redirect
+    const timer = setTimeout(() => {
+      navigate('/dashboard', { replace: true });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [enableDemoMode, navigate]);
+
+  return (
+    <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mx-auto mb-4"></div>
+        <p className="text-neutral-600">Starting demo mode...</p>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -88,6 +118,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomeRoute />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/demo" element={<DemoCallback />} />
             <Route
               path="/dashboard"
               element={
