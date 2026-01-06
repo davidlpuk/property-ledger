@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { Onboarding } from './components/Onboarding';
 import { Login } from './pages/Login';
+import { ResetPassword } from './pages/ResetPassword';
 import { LandingPage } from './pages/LandingPage';
 import { supabase } from './lib/supabase';
 
@@ -118,6 +119,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomeRoute />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/demo" element={<DemoCallback />} />
             <Route
               path="/dashboard"

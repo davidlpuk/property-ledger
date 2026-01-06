@@ -9,6 +9,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
   enableDemoMode: () => void;
 }
 
@@ -68,6 +69,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function resetPassword(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error: error ? new Error(error.message) : null };
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     setIsDemo(false);
@@ -92,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isDemo, signIn, signUp, signOut, enableDemoMode }}>
+    <AuthContext.Provider value={{ user, loading, isDemo, signIn, signUp, signOut, resetPassword, enableDemoMode }}>
       {children}
     </AuthContext.Provider>
   );
