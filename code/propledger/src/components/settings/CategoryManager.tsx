@@ -509,7 +509,7 @@ function DeleteModal({
 // Main Category Manager Component
 // ============================================================================
 export function CategoryManager() {
-    const { user } = useAuth();
+    const { user, isDemo } = useAuth();
     const [categories, setCategories] = useState<CategoryWithUsage[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -577,7 +577,18 @@ export function CategoryManager() {
     const handleSaveCategory = async (data: Partial<CategoryWithUsage>) => {
         console.log('handleSaveCategory called with data:', data);
         console.log('editingId:', editingId, 'isNew:', !editingId);
-        console.log('user:', user?.id);
+        console.log('user:', user?.id, 'isDemo:', isDemo);
+
+        // Check if user is authenticated
+        if (!user?.id) {
+            console.error('User not authenticated');
+            throw new Error('You must be signed in to create categories');
+        }
+
+        // Check if in demo mode
+        if (isDemo) {
+            throw new Error('Category creation is not available in demo mode. Please sign in to create categories.');
+        }
 
         if (editingId) {
             console.log('Updating existing category:', editingId);
@@ -605,21 +616,23 @@ export function CategoryManager() {
                 icon: data.icon,
                 colour: data.colour,
                 is_default: false,
-                iva_rate: 0,
+                iva_rate: '0',
                 is_deductible: data.type === 'expense',
-                user_id: user?.id,
+                user_id: user.id,
                 sort_order: categories.length,
             };
             console.log('Insert data:', insertData);
-            const { error } = await supabase
+            const { error, data: result } = await supabase
                 .from('categories')
-                .insert(insertData);
+                .insert(insertData)
+                .select();
 
             if (error) {
                 console.error('Supabase insert error:', error);
-                throw error;
+                console.error('Error details:', JSON.stringify(error, null, 2));
+                throw new Error(`Failed to create category: ${error.message}`);
             }
-            console.log('Insert successful');
+            console.log('Insert successful, result:', result);
         }
 
         console.log('Reloading categories...');
@@ -754,7 +767,7 @@ export function CategoryManager() {
                 < button
                     onClick={() => { setShowAddForm(true); setEditingId(null); }
                     }
-                    disabled={showAddForm || loading}
+                    disabled={showAddForm || loading || isDemo}
                     className="flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
