@@ -1,8 +1,11 @@
 {
+    "buildCommand": "cd code/propledger && npm run build",
+    "outputDirectory": "code/propledger/dist",
+    "framework": "vite",
     "rewrites": [
         {
             "source": "/(.*)",
-            "destination": "/index.html"
+            "destination": "/code/propledger/index.html"
         }
     ]
 }
