@@ -220,7 +220,7 @@ function CategoryForm({
         setError('');
 
         try {
-            onSave({
+            await onSave({
                 name: name.trim(),
                 type,
                 icon: selectedIcon,
