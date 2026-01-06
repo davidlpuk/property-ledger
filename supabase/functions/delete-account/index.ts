@@ -43,8 +43,17 @@ serve(async (req: Request) => {
             });
         }
 
-        // Parse request body
-        const { reason, feedback } = await req.json() as DeleteAccountRequest;
+        // Parse request body with fallback for empty body
+        let reason: string | undefined;
+        let feedback: string | undefined;
+        try {
+            const body = await req.json();
+            reason = body?.reason;
+            feedback = body?.feedback;
+        } catch (e) {
+            // Body may be empty or invalid, use defaults
+            console.log('[DELETE_ACCOUNT] No request body provided, using defaults');
+        }
 
         // Check if user already has a pending deletion
         const { data: existingProfile, error: profileError } = await supabaseAdmin
@@ -122,8 +131,8 @@ serve(async (req: Request) => {
             })
             .eq('id', user.id);
 
-        // Invalidate all active sessions
-        await supabaseAdmin.auth.admin.deleteUser(user.id);
+        // Invalidate all active sessions by signing out everywhere
+        await supabaseAdmin.auth.signOut();
 
         // Log the deletion request
         console.log(`[DELETE_ACCOUNT] Deletion initiated for user ${user.id}`);
