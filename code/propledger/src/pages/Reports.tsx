@@ -1,16 +1,63 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Transaction, Category, Property } from '../lib/types'; // Assuming these exist
+import { Transaction, Category, Property } from '../lib/types';
 import { formatCurrency } from '../lib/format';
 import {
     PieChart, BarChart as BarChartIcon, Download, Filter,
-    Calendar as CalendarIcon, ChevronDown, ArrowUpDown
+    Calendar as CalendarIcon, ChevronDown, ArrowUpDown, X
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     Cell, Pie
 } from 'recharts';
+
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: any[];
+    label?: string | number;
+    onClick?: (data: any) => void;
+    filterByCategory?: (categoryId: string) => void;
+}
+
+// LocalStorage key for filter persistence
+const FILTERS_STORAGE_KEY = 'propledger_reports_filters';
+
+interface SavedFilters {
+    selectedYear: number;
+    selectedMonth: number | 'all';
+    selectedProperty: string;
+    selectedCategory: string;
+}
+
+// Default filters
+const defaultFilters: SavedFilters = {
+    selectedYear: new Date().getFullYear(),
+    selectedMonth: 'all',
+    selectedProperty: 'all',
+    selectedCategory: 'all'
+};
+
+function getSavedFilters(): SavedFilters {
+    try {
+        const saved = localStorage.getItem(FILTERS_STORAGE_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            return { ...defaultFilters, ...parsed };
+        }
+    } catch (e) {
+        console.warn('Failed to load saved filters:', e);
+    }
+    return defaultFilters;
+}
+
+function saveFilters(filters: SavedFilters) {
+    try {
+        localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
+    } catch (e) {
+        console.warn('Failed to save filters:', e);
+    }
+}
 
 export function Reports() {
     const { user } = useAuth();
@@ -19,11 +66,46 @@ export function Reports() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [properties, setProperties] = useState<Property[]>([]);
 
-    // Filters
-    const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-    const [selectedMonth, setSelectedMonth] = useState<number | 'all'>('all'); // 0-11 or 'all'
-    const [selectedProperty, setSelectedProperty] = useState<string>('all');
-    const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    // Load saved filters on mount
+    const savedFilters = useMemo(() => getSavedFilters(), []);
+
+    // Filters - initialize from saved or default
+    const [selectedYear, setSelectedYear] = useState<number>(savedFilters.selectedYear);
+    const [selectedMonth, setSelectedMonth] = useState<number | 'all'>(savedFilters.selectedMonth);
+    const [selectedProperty, setSelectedProperty] = useState<string>(savedFilters.selectedProperty);
+    const [selectedCategory, setSelectedCategory] = useState<string>(savedFilters.selectedCategory);
+
+    // Active filter summary for UI
+    const [activeFilters, setActiveFilters] = useState<string[]>([]);
+
+    // Save filters when they change
+    useEffect(() => {
+        saveFilters({ selectedYear, selectedMonth, selectedProperty, selectedCategory });
+    }, [selectedYear, selectedMonth, selectedProperty, selectedCategory]);
+
+    // Update active filters summary
+    useEffect(() => {
+        const filters: string[] = [];
+        if (selectedYear !== defaultFilters.selectedYear) {
+            filters.push(`Year: ${selectedYear}`);
+        }
+        if (selectedMonth !== 'all') {
+            const monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            filters.push(`Month: ${monthNames[selectedMonth as number]}`);
+        }
+        if (selectedProperty !== 'all') {
+            const prop = properties.find(p => p.id === selectedProperty);
+            filters.push(`Property: ${prop?.name || selectedProperty}`);
+        }
+        if (selectedCategory !== 'all') {
+            const cat = categories.find(c => c.id === selectedCategory);
+            filters.push(`Category: ${cat?.name || selectedCategory}`);
+        }
+        setActiveFilters(filters);
+    }, [selectedYear, selectedMonth, selectedProperty, selectedCategory, properties, categories]);
 
     // Sorting
     const [sortField, setSortField] = useState<'name' | 'income' | 'expense' | 'net'>('expense');
