@@ -208,7 +208,7 @@ function CategoryForm({
         const trimmed = name.trim().replace(/\s+/g, ' ');
         if (!trimmed) return 'Category name is required';
         if (trimmed.length > 50) return 'Max 50 characters';
-        if (!/^[a-zA-Z0-9\s\-&']+$/.test(trimmed)) return 'Only letters, numbers, spaces, hyphens, &';
+        if (!/^[a-zA-Z0-9\s\-&']+$/.test(trimmed)) return 'Only letters, numbers, spaces, hyphens, & and apostrophes are allowed';
         return null;
     };
 
@@ -219,18 +219,37 @@ function CategoryForm({
         setSaving(true);
         setError('');
 
+        // Add a timeout to prevent hanging
+        const timeoutId = setTimeout(() => {
+            console.error('CategoryForm: Save operation timed out');
+            setError('Save operation timed out. Please try again.');
+            setSaving(false);
+        }, 10000); // 10 second timeout
+
         try {
+            console.log('CategoryForm: Calling onSave with data:', { name: name.trim(), type, icon: selectedIcon, colour: selectedColor });
             await onSave({
                 name: name.trim(),
                 type,
                 icon: selectedIcon,
                 colour: selectedColor,
             });
+            console.log('CategoryForm: onSave completed successfully');
         } catch (err) {
-            setError('Failed to save category');
-        } finally {
+            console.error('CategoryForm: Error in onSave:', err);
+            clearTimeout(timeoutId);
+            setError(err instanceof Error ? err.message : 'Failed to save category');
             setSaving(false);
+            return;
+        } finally {
+            clearTimeout(timeoutId);
         }
+
+        // Only reset form state after successful save
+        setName('');
+        setType('expense');
+        setSelectedIcon('Home');
+        setSelectedColor('Blue');
     };
 
     const SelectedIconComponent = ICON_OPTIONS.find(i => i.label === selectedIcon)?.icon || Home;
@@ -271,7 +290,12 @@ function CategoryForm({
                             if (e.key === 'Escape') onCancel();
                         }}
                     />
-                    {error && <p className="mt-1 text-sm text-red-500" > {error} </p>}
+                    {error && (
+                        <div className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                            <AlertCircle className="w-4 h-4" />
+                            {error}
+                        </div>
+                    )}
                 </div>
 
                 {/* Type Select */}
@@ -551,7 +575,12 @@ export function CategoryManager() {
 
     // Handle category save
     const handleSaveCategory = async (data: Partial<CategoryWithUsage>) => {
+        console.log('handleSaveCategory called with data:', data);
+        console.log('editingId:', editingId, 'isNew:', !editingId);
+        console.log('user:', user?.id);
+
         if (editingId) {
+            console.log('Updating existing category:', editingId);
             const { error } = await supabase
                 .from('categories')
                 .update({
@@ -562,28 +591,42 @@ export function CategoryManager() {
                 })
                 .eq('id', editingId);
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase update error:', error);
+                throw error;
+            }
+            console.log('Update successful');
         } else {
+            console.log('Creating new category');
+            const insertData = {
+                name: data.name,
+                type: data.type,
+                icon: data.icon,
+                colour: data.colour,
+                is_default: false,
+                iva_rate: 0,
+                is_deductible: data.type === 'expense',
+                user_id: user?.id,
+                sort_order: categories.length,
+            };
+            console.log('Insert data:', insertData);
             const { error } = await supabase
                 .from('categories')
-                .insert({
-                    name: data.name,
-                    type: data.type,
-                    icon: data.icon,
-                    colour: data.colour,
-                    is_default: false,
-                    iva_rate: 0,
-                    is_deductible: data.type === 'expense',
-                    user_id: user?.id,
-                    sort_order: categories.length,
-                });
+                .insert(insertData);
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase insert error:', error);
+                throw error;
+            }
+            console.log('Insert successful');
         }
 
+        console.log('Reloading categories...');
         await loadCategories();
+        console.log('Categories reloaded');
         setShowAddForm(false);
         setEditingId(null);
+        console.log('Form reset complete');
     };
 
     // Handle delete

@@ -1066,6 +1066,7 @@ export function Transactions() {
                             onChange={async (val) => { await updateTransaction(tx.id, { property_id: val || null }, false); }}
                             placeholder="Select"
                             className="w-full"
+                            compact
                           />
                         </div>
                       )}
