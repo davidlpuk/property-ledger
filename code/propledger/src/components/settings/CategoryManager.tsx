@@ -527,10 +527,11 @@ export function CategoryManager() {
         try {
             console.log('[CategoryManager] Loading categories for user:', user.id);
 
-            // Simple query first - fetch all categories
+            // Fetch user's categories and system/default categories (where user_id is NULL)
             const { data: allCategories, error: fetchError } = await supabase
                 .from('categories')
                 .select('*')
+                .or(`user_id.eq.${user.id},user_id.is.null`)
                 .order('sort_order', { ascending: true, nullsFirst: false })
                 .order('name');
 
