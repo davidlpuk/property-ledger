@@ -679,7 +679,6 @@ export function generateSearchTerms(companyName: string): string[] {
         'worten': ['worten.es'],
         'pccomponentes': ['pccomponentes.com'],
         'coolmod': ['coolmod.com'],
-        'amazon': ['amazon.es'], // duplicate key allowed for fallback
 
         // Fashion
         'zara': ['zara.com'],
@@ -692,7 +691,6 @@ export function generateSearchTerms(companyName: string): string[] {
         'lefties': ['lefties.com'],
         'springfield': ['springfield.com'],
         'sfera': ['sfera.com'],
-        'mango': ['mango.com'],
         'desigual': ['desigual.com'],
         'h&m': ['hm.com'],
         'primark': ['primark.com'],
@@ -702,7 +700,7 @@ export function generateSearchTerms(companyName: string): string[] {
         'iese': ['iese.edu'],
         'esade': ['esade.edu'],
         'deusto': ['deusto.es'],
-        'navarra': ['unav.es'],
+        'unav': ['unav.es'],
         'comillas': ['comillas.edu'],
         'upf': ['upf.edu'],
         'ub': ['ub.edu'],
