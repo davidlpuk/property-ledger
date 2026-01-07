@@ -527,13 +527,10 @@ export function CategoryManager() {
         try {
             console.log('[CategoryManager] Loading categories for user:', user.id);
 
-            // Fetch all categories that the user can see (RLS handles permissions)
-            // Then filter for user's own categories in JavaScript
+            // Fetch all categories - simple query like Transactions page
             const { data: allCategories, error: fetchError } = await supabase
                 .from('categories')
-                .select('*')
-                .order('sort_order', { ascending: true, nullsFirst: false })
-                .order('name');
+                .select('*');
 
             console.log('[CategoryManager] Category query result:', {
                 count: allCategories?.length,
@@ -545,9 +542,15 @@ export function CategoryManager() {
             }
 
             // Filter to show only user's categories and system defaults (where user_id is NULL)
-            const filteredCategories = allCategories?.filter(cat =>
-                cat.user_id === user.id || cat.user_id === null
-            ) || [];
+            const filteredCategories = (allCategories || [])
+                .filter(cat => cat.user_id === user.id || cat.user_id === null)
+                .sort((a, b) => {
+                    // Sort by sort_order first, then by name
+                    if (a.sort_order !== b.sort_order) {
+                        return (a.sort_order || 999) - (b.sort_order || 999);
+                    }
+                    return a.name.localeCompare(b.name);
+                });
 
             if (filteredCategories && filteredCategories.length > 0) {
                 // Count transactions for each category in parallel
