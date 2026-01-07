@@ -14,6 +14,8 @@ const Transactions = React.lazy(() => import('./pages/Transactions').then(m => (
 const Taxes = React.lazy(() => import('./pages/Taxes').then(m => ({ default: m.Taxes })));
 const Reports = React.lazy(() => import('./pages/Reports').then(m => ({ default: m.Reports })));
 const Settings = React.lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const TestPage = React.lazy(() => import('./pages/Test').then(m => ({ default: m.default })));
+import LogoTestPage from './pages/LogoTest';
 
 
 // Lazy load settings sub-sections
@@ -169,6 +171,16 @@ function App() {
               <Route path="tenants" element={<TenantsSection />} />
               <Route path="categories" element={<CategoriesSection />} />
             </Route>
+
+            <Route path="/test" element={<TestPage />} />
+            <Route
+              path="/logo-test"
+              element={
+                <ProtectedRoute>
+                  <LogoTestPage />
+                </ProtectedRoute>
+              }
+            />
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

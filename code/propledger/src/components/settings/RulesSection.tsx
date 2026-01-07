@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { CategorisationRule, Category, Property } from '../../lib/types';
-import { Plus, Wand2, X, Edit2, Trash2, Play, ToggleLeft, ToggleRight, Check } from 'lucide-react';
+import { Plus, Wand2, X, Edit2, Trash2, Play, ToggleLeft, ToggleRight, Check, Globe } from 'lucide-react';
 
 export function RulesSection() {
   const { user } = useAuth();
@@ -12,7 +12,7 @@ export function RulesSection() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<CategorisationRule | null>(null);
-  const [formData, setFormData] = useState({ name: '', pattern: '', match_type: 'contains' as CategorisationRule['match_type'], category_id: '', property_id: '', priority: 0, is_active: true });
+  const [formData, setFormData] = useState({ name: '', pattern: '', match_type: 'contains' as CategorisationRule['match_type'], category_id: '', property_id: '', priority: 0, is_active: true, apply_globally: false });
   const [matchingTxCount, setMatchingTxCount] = useState(0);
   const [showApplyDialog, setShowApplyDialog] = useState(false);
   const [pendingRule, setPendingRule] = useState<{ pattern: string; match_type: CategorisationRule['match_type']; category_id: string; property_id: string } | null>(null);
@@ -36,8 +36,8 @@ export function RulesSection() {
   }
 
   function openForm(rule?: CategorisationRule) {
-    if (rule) { setEditing(rule); setFormData({ name: rule.name, pattern: rule.pattern, match_type: rule.match_type, category_id: rule.category_id || '', property_id: rule.property_id || '', priority: rule.priority, is_active: rule.is_active }); }
-    else { setEditing(null); setFormData({ name: '', pattern: '', match_type: 'contains', category_id: '', property_id: '', priority: 0, is_active: true }); }
+    if (rule) { setEditing(rule); setFormData({ name: rule.name, pattern: rule.pattern, match_type: rule.match_type, category_id: rule.category_id || '', property_id: rule.property_id || '', priority: rule.priority, is_active: rule.is_active, apply_globally: rule.apply_globally || false }); }
+    else { setEditing(null); setFormData({ name: '', pattern: '', match_type: 'contains', category_id: '', property_id: '', priority: 0, is_active: true, apply_globally: false }); }
     setShowForm(true);
   }
 

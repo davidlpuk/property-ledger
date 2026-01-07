@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Category } from '../../lib/types';
@@ -10,11 +10,12 @@ import {
     Building, Key, Wrench, Paintbrush, Dog, Baby,
     Gift, Music, Gamepad2, Camera, Code, DollarSign, TrendingUp,
     TrendingDown, CreditCard, Wallet, PiggyBank, Target,
-    AlertCircle, CheckCircle2
+    AlertCircle, CheckCircle2, Shield, FileText, Scale,
+    Circle
 } from 'lucide-react';
 
 // ============================================================================
-// Icon Options (Lucide icons for categories)
+// Icon Options (unique labels to avoid React rendering bugs)
 // ============================================================================
 const ICON_OPTIONS = [
     { icon: Home, label: 'Home' },
@@ -45,11 +46,10 @@ const ICON_OPTIONS = [
     { icon: TrendingUp, label: 'Income' },
     { icon: TrendingDown, label: 'Expenses' },
     { icon: CreditCard, label: 'Credit' },
-    { icon: Wallet, label: 'Cash' },
     { icon: PiggyBank, label: 'Savings' },
     { icon: Target, label: 'Goals' },
-    { icon: Building, label: 'Real Estate' },
-    { icon: Wallet, label: 'Bills' },
+    { icon: Shield, label: 'Insurance' },
+    { icon: Circle, label: 'Other' },
 ];
 
 // ============================================================================
@@ -219,37 +219,26 @@ function CategoryForm({
         setSaving(true);
         setError('');
 
-        // Add a timeout to prevent hanging
-        const timeoutId = setTimeout(() => {
-            console.error('CategoryForm: Save operation timed out');
-            setError('Save operation timed out. Please try again.');
-            setSaving(false);
-        }, 10000); // 10 second timeout
-
         try {
-            console.log('CategoryForm: Calling onSave with data:', { name: name.trim(), type, icon: selectedIcon, colour: selectedColor });
             await onSave({
                 name: name.trim(),
                 type,
                 icon: selectedIcon,
                 colour: selectedColor,
             });
-            console.log('CategoryForm: onSave completed successfully');
+            // Reset form state after successful save - only if parent didn't throw
+            setName('');
+            setType('expense');
+            setSelectedIcon('Home');
+            setSelectedColor('Blue');
         } catch (err) {
-            console.error('CategoryForm: Error in onSave:', err);
-            clearTimeout(timeoutId);
+            // Don't reset form state on error so user can correct issues
             setError(err instanceof Error ? err.message : 'Failed to save category');
             setSaving(false);
             return;
         } finally {
-            clearTimeout(timeoutId);
+            setSaving(false);
         }
-
-        // Only reset form state after successful save
-        setName('');
-        setType('expense');
-        setSelectedIcon('Home');
-        setSelectedColor('Blue');
     };
 
     const SelectedIconComponent = ICON_OPTIONS.find(i => i.label === selectedIcon)?.icon || Home;
@@ -522,19 +511,42 @@ export function CategoryManager() {
     const [deleteCategory, setDeleteCategory] = useState<CategoryWithUsage | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [actionMenu, setActionMenu] = useState<string | null>(null);
+    const [globalError, setGlobalError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const loadCategories = useCallback(async () => {
         setLoading(true);
+
+        if (!user?.id) {
+            console.log('[CategoryManager] No user ID, skipping category load');
+            setLoading(false);
+            setCategories([]);
+            return;
+        }
+
         try {
-            const { data: categoryData } = await supabase
+            console.log('[CategoryManager] Loading categories for user:', user.id);
+
+            // Simple query first - fetch all categories
+            const { data: allCategories, error: fetchError } = await supabase
                 .from('categories')
                 .select('*')
                 .order('sort_order', { ascending: true, nullsFirst: false })
                 .order('name');
 
-            if (categoryData) {
+            console.log('[CategoryManager] Category query result:', {
+                count: allCategories?.length,
+                error: fetchError?.message
+            });
+
+            if (fetchError) {
+                throw fetchError;
+            }
+
+            if (allCategories && allCategories.length > 0) {
+                // Count transactions for each category in parallel
                 const categoriesWithUsage: CategoryWithUsage[] = await Promise.all(
-                    categoryData.map(async (cat) => {
+                    allCategories.map(async (cat) => {
                         const { count } = await supabase
                             .from('transactions')
                             .select('*', { count: 'exact', head: true })
@@ -548,14 +560,20 @@ export function CategoryManager() {
                     })
                 );
 
+                console.log('[CategoryManager] Loaded categories with usage:', categoriesWithUsage.length);
                 setCategories(categoriesWithUsage);
+            } else {
+                console.log('[CategoryManager] No category data returned');
+                setCategories([]);
             }
         } catch (error) {
-            console.error('Error loading categories:', error);
+            console.error('[CategoryManager] Error loading categories:', error);
+            setGlobalError(error instanceof Error ? error.message : 'Failed to load categories');
+            setCategories([]);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user]);
 
     useEffect(() => { loadCategories(); }, [loadCategories]);
 
@@ -573,15 +591,10 @@ export function CategoryManager() {
         return categories.filter(cat => cat.transaction_count === 0);
     }, [categories]);
 
-    // Handle category save
+    // Handle category save with optimistic update
     const handleSaveCategory = async (data: Partial<CategoryWithUsage>) => {
-        console.log('handleSaveCategory called with data:', data);
-        console.log('editingId:', editingId, 'isNew:', !editingId);
-        console.log('user:', user?.id, 'isDemo:', isDemo);
-
         // Check if user is authenticated
         if (!user?.id) {
-            console.error('User not authenticated');
             throw new Error('You must be signed in to create categories');
         }
 
@@ -591,7 +604,29 @@ export function CategoryManager() {
         }
 
         if (editingId) {
-            console.log('Updating existing category:', editingId);
+            // Update existing category - optimistic update
+            const updatedCategory: CategoryWithUsage = {
+                id: editingId,
+                name: data.name!,
+                type: data.type!,
+                icon: data.icon || 'Home',
+                colour: data.colour || 'Blue',
+                is_default: false,
+                iva_rate: 0,
+                is_deductible: data.type === 'expense',
+                user_id: user.id,
+                created_at: new Date().toISOString(),
+                usage_count: 0,
+                transaction_count: 0,
+            };
+
+            // Optimistically update UI
+            setCategories(prev => prev.map(cat =>
+                cat.id === editingId ? { ...cat, ...updatedCategory } : cat
+            ));
+            setSuccessMessage('Category updated successfully');
+
+            // Perform actual update
             const { error } = await supabase
                 .from('categories')
                 .update({
@@ -604,67 +639,109 @@ export function CategoryManager() {
                 .eq('id', editingId);
 
             if (error) {
-                console.error('Supabase update error:', error);
+                // Revert on error
+                loadCategories();
                 throw error;
             }
-            console.log('Update successful');
         } else {
-            console.log('Creating new category');
-            const insertData = {
-                name: data.name,
-                type: data.type,
-                icon: data.icon,
-                colour: data.colour,
+            // Create new category - generate temp ID for optimistic update
+            const tempId = `temp-${Date.now()}`;
+            const newCategory: CategoryWithUsage = {
+                id: tempId,
+                name: data.name!,
+                type: data.type!,
+                icon: data.icon || 'Home',
+                colour: data.colour || 'Blue',
                 is_default: false,
-                iva_rate: '0',
+                iva_rate: 0,
                 is_deductible: data.type === 'expense',
                 user_id: user.id,
-                sort_order: categories.length,
+                created_at: new Date().toISOString(),
+                usage_count: 0,
+                transaction_count: 0,
             };
-            console.log('Insert data:', insertData);
+
+            // Optimistically add to UI
+            setCategories(prev => [...prev, newCategory]);
+            setSuccessMessage('Category created successfully');
+
+            // Perform actual insert
             const { error, data: result } = await supabase
                 .from('categories')
-                .insert(insertData)
-                .select();
+                .insert({
+                    name: data.name,
+                    type: data.type,
+                    icon: data.icon,
+                    colour: data.colour,
+                    is_default: false,
+                    iva_rate: '0',
+                    is_deductible: data.type === 'expense',
+                    user_id: user.id,
+                })
+                .select()
+                .single();
 
             if (error) {
-                console.error('Supabase insert error:', error);
-                console.error('Error details:', JSON.stringify(error, null, 2));
+                // Revert on error
+                setCategories(prev => prev.filter(cat => cat.id !== tempId));
                 throw new Error(`Failed to create category: ${error.message}`);
             }
-            console.log('Insert successful, result:', result);
+
+            // Replace temp ID with actual ID
+            if (result) {
+                setCategories(prev => prev.map(cat =>
+                    cat.id === tempId ? { ...cat, id: result.id } : cat
+                ));
+            }
         }
 
-        console.log('Reloading categories...');
-        await loadCategories();
-        console.log('Categories reloaded');
         setShowAddForm(false);
         setEditingId(null);
-        console.log('Form reset complete');
+
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(null), 3000);
     };
 
-    // Handle delete
+    // Handle delete with optimistic update
     const handleDelete = async () => {
-        if (!deleteCategory) return;
+        if (!deleteCategory) {
+            return;
+        }
+
         setIsProcessing(true);
 
+        // Optimistically remove from UI
+        const categoryToDelete = deleteCategory;
+        setCategories(prev => prev.filter(cat => cat.id !== deleteCategory.id));
+        setSuccessMessage('Category deleted successfully');
+
         try {
+            // Update transactions to remove category_id
             await supabase
                 .from('transactions')
                 .update({ category_id: null })
                 .eq('category_id', deleteCategory.id);
 
-            await supabase
+            // Delete the category
+            const { error: deleteError } = await supabase
                 .from('categories')
                 .delete()
                 .eq('id', deleteCategory.id);
 
-            await loadCategories();
-            setDeleteCategory(null);
+            if (deleteError) {
+                // Revert on error
+                loadCategories();
+                throw deleteError;
+            }
         } catch (error) {
-            console.error('Error deleting category:', error);
+            // Revert on error
+            loadCategories();
+            setSuccessMessage(null);
+            throw error;
         } finally {
+            setDeleteCategory(null);
             setIsProcessing(false);
+            setTimeout(() => setSuccessMessage(null), 3000);
         }
     };
 
@@ -745,9 +822,13 @@ export function CategoryManager() {
         }
     };
 
-    // Get icon component
+    // Get icon component (uses unique label to avoid React rendering bugs)
     const getIconComponent = (iconName?: string) => {
-        const iconOption = ICON_OPTIONS.find(i => i.label === iconName);
+        // First try exact label match
+        let iconOption = ICON_OPTIONS.find(i => i.label === iconName);
+        if (iconOption) return iconOption.icon;
+        // Fallback to case-insensitive match
+        iconOption = ICON_OPTIONS.find(i => i.label.toLowerCase() === iconName?.toLowerCase());
         return iconOption?.icon || Tag;
     };
 
@@ -758,6 +839,21 @@ export function CategoryManager() {
 
     return (
         <div className="space-y-6" >
+            {/* Global Error */}
+            {globalError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                    Error: {globalError}
+                </div>
+            )}
+
+            {/* Success Toast */}
+            {successMessage && (
+                <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 bg-green-500 text-white rounded-lg shadow-lg transition-all duration-300 ease-in-out transform animate-in fade-in slide-in-from-top">
+                    <CheckCircle2 className="w-5 h-5" />
+                    {successMessage}
+                </div>
+            )}
+
             {/* Header */}
             < div className="flex items-center justify-between" >
                 <div>

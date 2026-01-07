@@ -7,12 +7,14 @@ import { formatCurrency, formatDate } from '../lib/format';
 import { Transaction, Category, Property, BankAccount, Attachment } from '../lib/types';
 import {
   Upload, Search, Check, X, Sparkles, Loader2, MessageSquare, ArrowUpDown, FileText, ChevronDown,
-  Download, Paperclip, RefreshCw, Wand2, AlertTriangle, Image as ImageIcon, File, Settings2, Filter
+  Download, Paperclip, RefreshCw, Wand2, AlertTriangle, Image as ImageIcon, File, Settings2, Filter,
+  Trash2
 } from 'lucide-react';
 import { TypeaheadSelect } from '../components/TypeaheadSelect';
 import { CategorySelect } from '../components/CategorySelect';
 import { NotesPanel } from '../components/NotesPanel';
 import { DateRangePicker } from '../components/DateRangePicker';
+import { CompanyLogo } from '../components/CompanyLogo';
 import { generateTransactionHash, normalizeVendor, detectRecurringTransactions, exportToCSV, exportToPDF } from '../lib/utils';
 
 type StatusFilter = 'all' | 'pending' | 'posted' | 'excluded';
@@ -272,6 +274,15 @@ export function Transactions() {
     if (!notesTx) return;
     await supabase.from('transactions').update({ notes: notes || null }).eq('id', notesTx.id);
     await loadData();
+  };
+
+  const deleteTransaction = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
+      return;
+    }
+    await supabase.from('transactions').delete().eq('id', id);
+    await loadData();
+    setSelectedTx(null);
   };
 
   // Attachment handling
@@ -979,7 +990,7 @@ export function Transactions() {
         ) : (
           <>
             {/* Fixed Header */}
-            <div className="grid grid-cols-[80px_1fr_100px] md:grid-cols-[100px_1fr_120px_140px_120px_80px] bg-neutral-50 border-b border-neutral-200 text-sm font-medium text-neutral-500 sticky top-0 z-10">
+            <div className="grid grid-cols-[80px_40px_1fr_100px] md:grid-cols-[100px_40px_1fr_120px_140px_120px_80px] bg-neutral-50 border-b border-neutral-200 text-sm font-medium text-neutral-500 sticky top-0 z-10">
               {visibleColumns.date && (
                 <div className="px-2 md:px-4 py-3">
                   <button
@@ -992,6 +1003,7 @@ export function Transactions() {
                   </button>
                 </div>
               )}
+              <div className="px-2 py-3"></div> {/* Logo column */}
               {visibleColumns.description && <div className="px-2 md:px-4 py-3">Description</div>}
               {visibleColumns.property && (
                 <div className="px-4 py-3 hidden md:block relative">
@@ -1042,7 +1054,7 @@ export function Transactions() {
                   return (
                     <div
                       key={tx.id}
-                      className="grid grid-cols-[80px_1fr_100px] md:grid-cols-[100px_1fr_120px_140px_120px_80px] border-b border-neutral-100 hover:bg-neutral-50 transition-colors group"
+                      className="grid grid-cols-[80px_40px_1fr_100px] md:grid-cols-[100px_40px_1fr_120px_140px_120px_80px] border-b border-neutral-100 hover:bg-neutral-50 transition-colors group"
                       style={{
                         position: 'absolute',
                         top: 0,
@@ -1054,6 +1066,9 @@ export function Transactions() {
                       {visibleColumns.date && (
                         <div className="px-2 md:px-4 py-3 text-xs md:text-sm text-neutral-600">{formatDate(tx.date)}</div>
                       )}
+                      <div className="px-2 py-3 flex items-center" onClick={() => setSelectedTx(tx)}>
+                        <CompanyLogo companyName={tx.description_clean || tx.description} size="sm" />
+                      </div>
                       {visibleColumns.description && (
                         <div className="px-2 md:px-4 py-3 cursor-pointer min-w-0" onClick={() => setSelectedTx(tx)}>
                           <p className="font-medium text-neutral-900 truncate text-sm md:text-base">{tx.description_clean || tx.description}</p>
@@ -1123,9 +1138,18 @@ export function Transactions() {
           <div className="relative bg-white rounded-xl shadow-modal w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-neutral-900">Transaction Details</h2>
-              <button onClick={() => setSelectedTx(null)} className="p-1 hover:bg-neutral-100 rounded">
-                <X className="w-5 h-5 text-neutral-500" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => deleteTransaction(selectedTx.id)}
+                  className="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                  title="Delete transaction"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+                <button onClick={() => setSelectedTx(null)} className="p-1 hover:bg-neutral-100 rounded">
+                  <X className="w-5 h-5 text-neutral-500" />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">

@@ -112,6 +112,7 @@ export interface CategorisationRule {
   property_id?: string;
   priority: number;
   is_active: boolean;
+  apply_globally: boolean;
   created_at: string;
   updated_at: string;
   category_name?: string;
